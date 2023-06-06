@@ -50,21 +50,17 @@ def main():
     elif args.model == "llama65b":
         PATH = PATH2
         from transformers import LlamaForCausalLM, LlamaTokenizer
-        tokenizer = LlamaTokenizer.from_pretrained(PATH)
+        tokenizer = LlamaTokenizer.from_pretrained(PATH, padding_side='left')
+        tokenizer.pad_token = tokenizer.eos_token
         model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.float16, device_map="auto")
     else:
         sys.exit("Enter valid --model (opt66b | llama65b)")
 
     print("Model loaded.")
 
-    # prompt
-    # sample = []
-
     while True:
         p_latencies = []
         d_latencies = []
-
-        prompts = []
 
         iconfig_s = input("batch_size (1, 2, ..., 64, 128), prompt_len (8, 16, ..., 512, 1024), new_tokens (16, 32, ..., 256, 512): ")
 
@@ -86,6 +82,7 @@ def main():
         print("Batch size = " + bs_s + ", prompt length = " + ps_s + ", generation length = " + gs_s)
 
         for i in range(1+args.n):
+            prompts = []
             for b in range(bs):
                 prompt = []
                 for t in range(ps):
