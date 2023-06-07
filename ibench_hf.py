@@ -4,8 +4,6 @@ import torch
 import argparse
 import numpy as np
 from time import perf_counter
-# from transformers import AutoModelForCausalLM, AutoTokenizer, set_seed
-# from transformers import LlamaForCausalLM, LlamaTokenizer
 
 # vocab used for input sequences
 iVOCAB = ['Neural', 'networks', 'learn', 'or', 'are', 'trained', 'by', 'processing', 'examples,', 'each', 'of', 'which', 'contains', 'a', 'known', 'input', 'and', 'result', 'forming', 'probability', 'weighted', 'associations', 'between', 'the', 'two', 'which', 'are', 'stored', 'within', 'the', 'data', 'structure', 'of', 'the', 'net', 'itself.', 'The', 'training', 'of', 'a', 'neural', 'network', 'from', 'a', 'given', 'example', 'is', 'usually', 'conducted', 'by', 'determining', 'the', 'difference', 'between', 'processed', 'output', 'of', 'the', 'network', 'often', 'prediction', 'and', 'a', 'target', 'output', 'This', 'difference', 'is', 'the', 'error', 'The', 'network', 'then', 'adjusts', 'its', 'weighted', 'associations', 'according', 'to', 'a', 'learning', 'rule', 'and', 'using', 'this', 'error', 'value', 'Successive', 'adjustments', 'will', 'cause', 'the', 'neural', 'network', 'to', 'produce', 'output', 'that', 'is', 'increasingly', 'similar', 'to', 'the', 'target', 'output', 'After', 'a', 'sufficient', 'number', 'of', 'these', 'adjustments', 'the', 'training', 'can', 'be', 'terminated', 'based', 'on', 'certain', 'criteria', 'This', 'is', 'a', 'form', 'of', 'supervised', 'learning', 'Such', 'systems', 'learn', 'to', 'perform', 'tasks', 'by', 'considering', 'examples', 'generally', 'without', 'being', 'programmed', 'with', 'task', 'specific', 'rules', 'For', 'example', 'in', 'image', 'recognition', 'they', 'might', 'learn', 'to', 'identify', 'images', 'that', 'contain', 'cats', 'by', 'analyzing', 'example', 'images', 'that', 'have', 'been', 'manually', 'labeled', 'as', 'cat', 'or', 'no', 'cat', 'and', 'using', 'the', 'results', 'to', 'identify', 'cats', 'in', 'other', 'images', 'They', 'do', 'this', 'without', 'any', 'prior', 'knowledge', 'of', 'cats', 'for', 'example', 'that', 'they', 'have', 'fur', 'tails', 'whiskers', 'and', 'cat', 'like', 'faces', 'Instead', 'they', 'automatically', 'generate', 'identifying', 'characteristics', 'from', 'the', 'examples', 'that', 'they', 'process', ',', '.', '?']
@@ -13,12 +11,9 @@ iVOCAB = ['Neural', 'networks', 'learn', 'or', 'are', 'trained', 'by', 'processi
 # input tokens (to build randomized input sequences)
 itokens = np.array(iVOCAB)
 
+# path to model files: tokenizer and weights
 PATH1='/data/opt66b'
 PATH2='/data/llama65b'
-
-#prompt = "Hello I am conscious and"
-#prompts = ["what be why one this", "Hello I am conscious and"]
-#prompts = []
 
 def main():
 
@@ -38,7 +33,10 @@ def main():
         help="number of iterations to inference; report an average of this number of runs (default: 8)",
     )
     parser.add_argument(
-        "--debug", action="store_true", default=False, help="Print token generations for debugging"
+        "--nocache", action="store_true", default=False, help="Disable KV caching (default: on) for transformer inference"
+    )
+    parser.add_argument(
+        "--debug", action="store_true", default=False, help="Print token generations for debugging (default: off)"
     )
     args = parser.parse_args()
 
@@ -56,7 +54,11 @@ def main():
     else:
         sys.exit("Enter valid --model (opt66b | llama65b)")
 
-    print("Model loaded.")
+    print("Model " + args.model + " loaded.")
+
+    if args.n <= 0:
+        args.n = 8
+    print("Benchmark to report is an average of " + str(args.n) + " runs ....\n")
 
     while True:
         p_latencies = []
@@ -95,17 +97,27 @@ def main():
             # input_ids = tokenizer(prompts, return_tensors="pt", truncation=True, padding=True).input_ids.cuda()
             input_ids = tokenizer(prompts, return_tensors="pt", padding=True).input_ids.cuda()
 
-            start_time = perf_counter()
-            generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1)
-            prefill_latency = perf_counter() - start_time
+            if args.nocache:
+                start_time = perf_counter()
+                generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1, use_cache=False)
+                prefill_latency = perf_counter() - start_time
+            else:
+                start_time = perf_counter()
+                generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1)
+                prefill_latency = perf_counter() - start_time
 
             # ignore the 1st - warmup
             if i != 0:
                 p_latencies.append(prefill_latency)
 
-            start_time = perf_counter()
-            generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1))
-            decode_latency_per_token = (perf_counter() - start_time) / (gs+1)
+            if args.nocache:
+                start_time = perf_counter()
+                generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1), use_cache=False)
+                decode_latency_per_token = (perf_counter() - start_time) / (gs+1)
+            else:
+                start_time = perf_counter()
+                generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1))
+                decode_latency_per_token = (perf_counter() - start_time) / (gs+1)
 
             # ignore the 1st - warmup
             if i != 0:
