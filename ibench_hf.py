@@ -14,6 +14,7 @@ itokens = np.array(iVOCAB)
 # path to model files: tokenizer and weights
 PATH1='/data/opt66b'
 PATH2='/data/llama65b'
+PATH3='/data/falcon40b-instruct'
 
 def main():
 
@@ -23,7 +24,7 @@ def main():
         "--model",
         type=str,
         default="opt66b",
-        help="name of LLM model for inference (default: opt66b)",
+        help="name of LLM (opt66b | llama65b | falcon40b-instruct) for inference (default: opt66b)",
     )
     parser.add_argument(
         "--n",
@@ -51,8 +52,14 @@ def main():
         tokenizer = LlamaTokenizer.from_pretrained(PATH, padding_side='left')
         tokenizer.pad_token = tokenizer.eos_token
         model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.float16, device_map="auto")
+    elif args.model == "falcon40b-instruct":
+        PATH = PATH3
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        tokenizer = AutoTokenizer.from_pretrained(PATH, padding_side='left')
+        tokenizer.pad_token = tokenizer.eos_token
+        model = AutoModelForCausalLM.from_pretrained(PATH, trust_remote_code=True, torch_dtype=torch.bfloat16, device_map="auto")
     else:
-        sys.exit("Enter valid --model (opt66b | llama65b)")
+        sys.exit("Enter valid --model (opt66b | llama65b | falcon40b-instruct)")
 
     print("Model " + args.model + " loaded.")
 

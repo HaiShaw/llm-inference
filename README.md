@@ -6,7 +6,8 @@ This repository provides inference utilities including benchmarking tools for la
 
 - [OPT-66B](https://huggingface.co/facebook/opt-66b) https://arxiv.org/abs/2205.01068, verified
 - [LLaMa-65B](https://huggingface.co/docs/transformers/main/model_doc/llama#llama) https://arxiv.org/abs/2302.13971, verified
-- Other OPT, LLaMa models of smaller sizes can be extended
+- [Falcon-40B-instruct](https://huggingface.co/tiiuae/falcon-40b-instruct), Falcon-40B later
+- Other OPT, LLaMa, Falcon models of smaller sizes can be extended
 - Any Hugging Face models can be easily extended
 
 ### Inference benchmarking utilities
@@ -16,8 +17,9 @@ This repository provides inference utilities including benchmarking tools for la
 ```python
 # prerequisites:
 # To enable faster access and loading for models, we expect they stay local:
-# -   OPT-66B model tokenizer and parameters are prelocated at: /data/opt66b
+# - OPT-66B model tokenizer and parameters are prelocated at: /data/opt66b
 # - LLaMa-65B model tokenizer and parameters are prelocated at: /data/llama65b
+# - Falcon-40B-instruct tokenizer and parameters are prelocated at: /data/falcon40b-instruct
 # when adding a new model of big size, you can do the same.
 
 /dockerx/llm-inference# python ibench_hf.py --help
@@ -27,7 +29,7 @@ PyTorch minGPT Example
 
 options:
   -h, --help     show this help message and exit
-  --model MODEL  name of LLM model for inference (default: opt66b)
+  --model MODEL  name of LLM (opt66b | llama65b | falcon40b-instruct) for inference (default: opt66b)
   --n N          number of iterations to inference; report an average of this number of runs (default: 8)
   --nocache      Disable KV caching (default: on) for transformer inference
   --debug        Print token generations for debugging (default: off)
