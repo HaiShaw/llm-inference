@@ -29,9 +29,9 @@ def main():
     parser.add_argument(
         "--n",
         type=int,
-        default=8,
+        default=10,
         metavar="N",
-        help="number of iterations to inference; report an average of this number of runs (default: 8)",
+        help="number of iterations to inference; report an average of this number of runs (default: 10)",
     )
     parser.add_argument(
         "--nocache", action="store_true", default=False, help="Disable KV caching (default: on) for transformer inference"
@@ -64,7 +64,7 @@ def main():
     print("Model " + args.model + " loaded.")
 
     if args.n <= 0:
-        args.n = 8
+        args.n = 10
     print("Benchmark to report is an average of " + str(args.n) + " runs ....\n")
 
     while True:
@@ -120,27 +120,29 @@ def main():
             if args.nocache:
                 start_time = perf_counter()
                 generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1), use_cache=False)
-                decode_latency_per_token = (perf_counter() - start_time) / (gs+1)
+                decode_latency = perf_counter() - start_time
             else:
                 start_time = perf_counter()
                 generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1))
-                decode_latency_per_token = (perf_counter() - start_time) / (gs+1)
+                decode_latency = perf_counter() - start_time
 
             # ignore the 1st - warmup
             if i != 0:
-                d_latencies.append(decode_latency_per_token)
-
-            # fixup prefill (to cancel 1 token generation included), this fixup can cause Neg values!
-            # prefill_latency = prefill_latency - decode_latency_per_token
+                d_latencies.append(decode_latency)
 
         # show generations for the last iteration
         if args.debug:
             print(tokenizer.batch_decode(generate_ids, skip_special_tokens=True))
 
+        # adjust
+        Ptime = np.array(p_latencies).mean()
+        Dtime = (np.array(d_latencies).mean() - Ptime)/gs
+        Ptime -= Dtime
+
         # reports
         print("\n")
-        print("Prefill phase latency on prompt of length   : " + ps_s + " = " + "{:.3f}".format(1000 * np.array(p_latencies).mean()) + "ms")
-        print("Decode latency per token on output of length: " + gs_s + " = " + "{:.3f}".format(1000 * np.array(d_latencies).mean()) + "ms")
+        print("Prefill phase latency on prompt of length   : " + ps_s + " = " + "{:.3f}".format(1000 * Ptime) + "ms")
+        print("Decode latency per token on output of length: " + gs_s + " = " + "{:.3f}".format(1000 * Dtime) + "ms")
 
 
         cont = input("\nContinue another inference benchmark run? (yes | no) ")
