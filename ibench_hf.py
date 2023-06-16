@@ -108,8 +108,8 @@ def main():
             prompts = []
             for b in range(bs):
                 if args.d:
-                    sequence = inputs           # len of 5
-                    neg_nums = (ps - (5+1))/2   # number of negative numbers to append
+                    sequence = inputs               # len of 5
+                    neg_nums = (ps - (5+1))//2      # number of negative numbers to append
                     for num in range(neg_nums, 0, -1):
                         sequence = sequence + " -" + str(num)
                     sequence = sequence + " 0"
@@ -130,9 +130,14 @@ def main():
                 generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1, use_cache=False)
                 prefill_latency = perf_counter() - start_time
             else:
-                start_time = perf_counter()
-                generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1)
-                prefill_latency = perf_counter() - start_time
+                if args.d:
+                    start_time = perf_counter()
+                    generate_ids = model.generate(input_ids, max_new_tokens=1)
+                    prefill_latency = perf_counter() - start_time
+                else:
+                    start_time = perf_counter()
+                    generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1)
+                    prefill_latency = perf_counter() - start_time
 
             # ignore the 1st - warmup
             if i != 0:
@@ -143,9 +148,14 @@ def main():
                 generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1), use_cache=False)
                 decode_latency = perf_counter() - start_time
             else:
-                start_time = perf_counter()
-                generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1))
-                decode_latency = perf_counter() - start_time
+                if args.d:
+                    start_time = perf_counter()
+                    generate_ids = model.generate(input_ids, max_new_tokens=(gs+1))
+                    decode_latency = perf_counter() - start_time
+                else:
+                    start_time = perf_counter()
+                    generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1))
+                    decode_latency = perf_counter() - start_time
 
             # ignore the 1st - warmup
             if i != 0:
