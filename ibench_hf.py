@@ -11,6 +11,10 @@ iVOCAB = ['Neural', 'networks', 'learn', 'or', 'are', 'trained', 'by', 'processi
 # input tokens (to build randomized input sequences)
 itokens = np.array(iVOCAB)
 
+# final deterministic prompts like: "An increasing sequence: -1 0" (for prompt len = 8)
+# deterministic prompts input base: len = 5 (with hidden </s>)
+inputs = "An increasing sequence:"
+
 # path to model files: tokenizer and weights
 PATH1='/data/opt66b'
 PATH2='/data/llama65b'
@@ -32,6 +36,9 @@ def main():
         default=10,
         metavar="N",
         help="number of iterations to inference; report an average of this number of runs (default: 10)",
+    )
+    parser.add_argument(
+            "--d", action="store_true", default=False, help="use deterministic prompts like: An increasing sequence: -5 -4 -3 -2 -1 0"
     )
     parser.add_argument(
         "--nocache", action="store_true", default=False, help="Disable KV caching (default: on) for transformer inference"
@@ -88,17 +95,31 @@ def main():
         # generation size
         gs = int(gs_s)
 
+        if ps < 8:
+            ps = 8
+        if ps % 2:
+            ps += 1
+
+        ps_s = str(ps)
+
         print("Batch size = " + bs_s + ", prompt length = " + ps_s + ", generation length = " + gs_s)
 
         for i in range(1+args.n):
             prompts = []
             for b in range(bs):
-                prompt = []
-                for t in range(ps):
-                    token = np.random.choice(itokens)
-                    prompt.append(token)
-                # a sample sequence
-                sequence = " ".join(prompt)
+                if args.d:
+                    sequence = inputs           # len of 5
+                    neg_nums = (ps - (5+1))/2   # number of negative numbers to append
+                    for num in range(neg_nums, 0, -1):
+                        sequence = sequence + " -" + str(num)
+                    sequence = sequence + " 0"
+                else:
+                    prompt = []
+                    for t in range(ps):
+                        token = np.random.choice(itokens)
+                        prompt.append(token)
+                    # a sample sequence
+                    sequence = " ".join(prompt)
                 prompts.append(sequence)
 
             # input_ids = tokenizer(prompts, return_tensors="pt", truncation=True, padding=True).input_ids.cuda()
