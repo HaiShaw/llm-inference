@@ -40,35 +40,44 @@ def main():
         "--model",
         type=str,
         default="opt66b",
-        help="name of LLM (opt66b | llama65b | falcon40b-instruct) for inference (default: opt66b)",
+        help="name of LLM (opt66b | llama65b | falcon40b-instruct) for inference (default: opt66b)"
     )
     parser.add_argument(
         "--platform",
         type=str,
         default="MI300X",
-        help="name of DL platform (MI300X | 2xH100) for inference (default: MI300X)",
+        help="name of DL platform (MI300X | 2xH100) for inference (default: MI300X)"
     )
     parser.add_argument(
         "--precision",
         type=str,
         default="float16",
-        help="model precision and data type (float16 | bfloat16) for inference (default: float16)",
+        help="model precision and data type (float16 | bfloat16) for inference (default: float16)"
     )
     parser.add_argument(
         "--n",
         type=int,
         default=10,
         metavar="N",
-        help="number of iterations to inference; report an average of this number of runs (default: 10)",
+        help="number of iterations to inference; report an average of this number of runs (default: 10)"
     )
     parser.add_argument(
-            "--d", action="store_true", default=False, help="use deterministic prompts like: An increasing sequence: -5 -4 -3 -2 -1 0"
+        "--d",
+        action="store_true",
+        default=False,
+        help="use deterministic prompts like: An increasing sequence: -5 -4 -3 -2 -1 0"
     )
     parser.add_argument(
-        "--nocache", action="store_true", default=False, help="Disable KV caching (default: on) for transformer inference"
+        "--nocache",
+        action="store_true",
+        default=False,
+        help="Disable KV caching (default: on) for transformer inference"
     )
     parser.add_argument(
-        "--debug", action="store_true", default=False, help="Print token generations for debugging (default: off)"
+        "--debug",
+        action="store_true",
+        default=False,
+        help="Print token generations for debugging (default: off)"
     )
     args = parser.parse_args()
 
@@ -133,6 +142,7 @@ def main():
     while True:
         p_latencies = []
         d_latencies = []
+        dlen_actual = []    # actual decoding length (for large number of new tokens to generate, e.g. 512, some models fall short)
 
         iconfig_s = input("batch_size (1, 2, ..., 64, 128), prompt_len (8, 16, ..., 512, 1024), new_tokens (16, 32, ..., 256, 512): ")
 
@@ -164,7 +174,7 @@ def main():
             prompts = []
             for b in range(bs):
                 if args.d:
-                    sequence = inputs               # len of 5
+                    sequence = inputs               # len of 5, plus 1 below count for </s>
                     neg_nums = (ps - (5+1))//2      # number of negative numbers to append
                     for num in range(neg_nums, 0, -1):
                         sequence = sequence + " -" + str(num)
@@ -216,15 +226,22 @@ def main():
             # ignore the 1st - warmup
             if i != 0:
                 d_latencies.append(decode_latency)
+                dlen_actual.append(generate_ids.size()[1] - ps)
 
         # show generations for the last iteration
         if args.debug:
             print(tokenizer.batch_decode(generate_ids, skip_special_tokens=True))
 
-        # adjust
+        # adjustment
         Ptime = np.array(p_latencies).mean()
-        Dtime = (np.array(d_latencies).mean() - Ptime)/gs
+        # Dtime = (np.array(d_latencies).mean() - Ptime)/gs
+
+        # -1 to count 1 token included in Ptime
+        Dtime = ((np.array(d_latencies) - Ptime)/(np.array(dlen_actual) - 1)).mean()
         Ptime -= Dtime
+        # error bound 5ms @ lower end
+        Ptime = max(0.005, Ptime)
+
 
         # reports
         print("\n")
