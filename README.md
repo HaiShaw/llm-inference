@@ -23,16 +23,21 @@ This repository provides inference utilities including benchmarking tools for la
 # when adding a new model of big size, you can do the same.
 
 /dockerx/llm-inference# python ibench_hf.py --help
-usage: ibench_hf.py [-h] [--model MODEL] [--n N] [--nocache] [--debug]
+usage: ibench_hf.py [-h] [--model MODEL] [--platform PLATFORM] [--precision PRECISION] [--n N] [--d] [--nocache] [--debug] [--profiling]
 
-PyTorch minGPT Example
+LLM Inference Benchmark Example
 
 options:
-  -h, --help     show this help message and exit
-  --model MODEL  name of LLM (opt66b | llama65b | falcon40b-instruct) for inference (default: opt66b)
-  --n N          number of iterations to inference; report an average of this number of runs (default: 8)
-  --nocache      Disable KV caching (default: on) for transformer inference
-  --debug        Print token generations for debugging (default: off)
+  -h, --help            show this help message and exit
+  --model MODEL         name of LLM (opt66b | llama65b | falcon40b-instruct) for inference (default: opt66b)
+  --platform PLATFORM   name of DL platform (MI300X | 2xH100) for inference (default: MI300X)
+  --precision PRECISION
+                        model precision and data type (float16 | bfloat16) for inference (default: float16)
+  --n N                 number of iterations to inference; report an average of this number of runs (default: 10)
+  --d                   use deterministic prompts like: An increasing sequence: -5 -4 -3 -2 -1 0
+  --nocache             Disable KV caching (default: on) for transformer inference
+  --debug               Print token generations for debugging (default: off)
+  --profiling           Enable DeepSpeed Flops Profiler Profiling (default: off)
 /dockerx/llm-inference# 
 ```
 

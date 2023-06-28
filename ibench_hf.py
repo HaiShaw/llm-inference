@@ -36,7 +36,7 @@ PATH3='/data/falcon40b-instruct'
 def main():
 
     # Training settings
-    parser = argparse.ArgumentParser(description="PyTorch minGPT Example")
+    parser = argparse.ArgumentParser(description="LLM Inference Benchmark Example")
     parser.add_argument(
         "--model",
         type=str,
