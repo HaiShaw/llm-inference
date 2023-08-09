@@ -118,7 +118,7 @@ def main():
             elif args.platform == "2xMI250":
                  model = AutoModelForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_opt66b)
             else:
-                sys.exit("Enter valid --platform (MI300X | 2xH100)")
+                sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
         else:
             sys.exit("Enter valid --precision (float16 | bfloat16)")
 
@@ -137,7 +137,7 @@ def main():
             elif args.platform == "2xMI250":
                 model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_llama65b)
             else:
-                sys.exit("Enter valid --platform (MI300X | 2xH100)")
+                sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
         else:
             sys.exit("Enter valid --precision (float16 | bfloat16)")
 
@@ -156,7 +156,7 @@ def main():
             elif args.platform == "2xMI250":
                 model = AutoModelForCausalLM.from_pretrained(PATH, trust_remote_code=True, torch_dtype=torch.float16, device_map=DM_2xMI250_falcon40b)
             else:
-                sys.exit("Enter valid --platform (MI300X | 2xH100)")
+                sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
         else:
             sys.exit("Enter valid --precision (float16 | bfloat16)")
 
@@ -175,7 +175,7 @@ def main():
             elif args.platform == "2xMI250":
                 model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_llamaII70b)
             else:
-                sys.exit("Enter valid --platform (MI300X | 2xH100)")
+                sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
         else:
             sys.exit("Enter valid --precision (float16 | bfloat16)")
 
@@ -194,7 +194,7 @@ def main():
             elif args.platform == "2xMI250":
                 model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_llamaII70b)
             else:
-                sys.exit("Enter valid --platform (MI300X | 2xH100)")
+                sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
         else:
             sys.exit("Enter valid --precision (float16 | bfloat16)")
 
