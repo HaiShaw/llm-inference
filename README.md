@@ -59,6 +59,7 @@ python ibench_hf.py --model opt66b --n 5
 ### Inference with DeepSpeed Accelerations: Tensor Parallelism and Kernel Injections
 - `deepspeed/ibench_ds.py` reports **prefill** latency and **decode** (per token generation) latency to arbitary batch size, prompt (input) size, generation (output) size provided, with DeepSpeed acceleration, with or without Tensor Parallelism, with or without Kernel injections.
 - performance benefit from TP is best seen with very fast inter-GPU interconnect (faster than PCI-e): AMD Infinity Fabric Link or Nvidia NVLink
+- note: with deepspeed 0.10.x, may need to update OpenAI Triton with `pip install --pre -U triton` or `pip install triton==2.0.0.dev20221120`
 - note: with TP `--num_gpus <=` total available GPUs
 
 ```python
@@ -109,6 +110,11 @@ deepspeed --num_gpus 1 deepspeed/ibench_ds.py --name /data/llama2-7b --batch_siz
 deepspeed --num_gpus 1 deepspeed/ibench_ds.py --name /data/llama2-7b --batch_size 32 --prompting_length 512 --performance --ds_inference --max_new_tokens  64 --use_kernel
 deepspeed --num_gpus 4 deepspeed/ibench_ds.py --name /data/llama65b  --batch_size 16 --prompting_length 512 --performance --ds_inference --max_new_tokens  64 --use_kernel
 deepspeed --num_gpus 8 deepspeed/ibench_ds.py --name /data/opt66b    --batch_size 32 --prompting_length 512 --performance --ds_inference --max_new_tokens 256 --use_kernel
+
+On AMD GPUs, to speedup DS JIT compilation, you may specify GCN architecture code:
+- MI300X: PYTORCH_ROCM_ARCH='gfx940' deepspeed --num_gpus 1 deepspeed/ibench_ds.py --name /data/llama2-7b --batch_size 32 --prompting_length 512 --performance --ds_inference --max_new_tokens 32 --use_kernel
+- MI2xx:  PYTORCH_ROCM_ARCH='gfx90a' deepspeed --num_gpus 4 deepspeed/ibench_ds.py --name /data/llama2-7b --batch_size 16 --prompting_length 512 --performance --ds_inference --max_new_tokens 32 --use_kernel
+- MI100:  PYTORCH_ROCM_ARCH='gfx908' deepspeed --num_gpus 8 deepspeed/ibench_ds.py --name /data/llama2-7b --batch_size  8 --prompting_length 512 --performance --ds_inference --max_new_tokens 32 --use_kernel
 ```
 
 ### Status
