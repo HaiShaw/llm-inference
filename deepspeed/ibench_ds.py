@@ -136,13 +136,15 @@ for i in range(iters):
     times.append(end - start)
 
 time_avg = np.mean(times)
-print(f"\ntotal generation time is {time_avg} sec")
+if args.local_rank == 0:
+    print(f"\ntotal generation time is {time_avg} sec")
 
 # outputs_shape = .shape[1]
 decode_avg = (time_avg - prefill_avg) / (args.max_new_tokens - 1)
-print("Prefill phase latency on prompt of length   : " + str(args.prompting_length) + " = " + "{:.3f}".format(1000 * prefill_avg) + "ms")
-print("Decode latency per token on output of length: " + str(args.max_new_tokens) + " = " + "{:.3f}".format(1000 * decode_avg) + "ms")
-print("Batch size: " + str(args.batch_size))
+if args.local_rank == 0:
+    print("Prefill phase latency on prompt of length   : " + str(args.prompting_length) + " = " + "{:.3f}".format(1000 * prefill_avg) + "ms")
+    print("Decode latency per token on output of length: " + str(args.max_new_tokens) + " = " + "{:.3f}".format(1000 * decode_avg) + "ms")
+    print("Batch size: " + str(args.batch_size))
 
 
 if args.local_rank == 0:
@@ -186,7 +188,8 @@ while True:
         ps += 1
 
     ps_s = str(ps)
-    print("Batch size = " + bs_s + ", prompt length = " + ps_s + ", generation length = " + gs_s)
+    if args.local_rank == 0:
+        print("Batch size = " + bs_s + ", prompt length = " + ps_s + ", generation length = " + gs_s)
 
     prompts = []
     for b in range(bs):
@@ -227,13 +230,15 @@ while True:
         times.append(end - start)
 
     time_avg = np.mean(times)
-    print(f"\ntotal generation time is {time_avg} sec")
+    if args.local_rank == 0:
+        print(f"\ntotal generation time is {time_avg} sec")
 
     # outputs_shape = .shape[1]
     decode_avg = (time_avg - prefill_avg) / (gs - 1)
-    print("Prefill phase latency on prompt of length   : " + str(ps) + " = " + "{:.3f}".format(1000 * prefill_avg) + "ms")
-    print("Decode latency per token on output of length: " + str(gs) + " = " + "{:.3f}".format(1000 * decode_avg) + "ms")
-    print("Batch size: " + str(bs))
+    if args.local_rank == 0:
+        print("Prefill phase latency on prompt of length   : " + str(ps) + " = " + "{:.3f}".format(1000 * prefill_avg) + "ms")
+        print("Decode latency per token on output of length: " + str(gs) + " = " + "{:.3f}".format(1000 * decode_avg) + "ms")
+        print("Batch size: " + str(bs))
 
 
     if args.local_rank == 0:
