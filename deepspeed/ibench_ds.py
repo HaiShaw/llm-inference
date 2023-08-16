@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
+from multiprocessing import shared_memory
 import numpy as np
 import deepspeed
 import math
@@ -160,34 +161,82 @@ if args.local_rank == 0:
 #        but capable with different batch size, prompt length and generation length. #
 ######################################################################################
 
+# Name for the shared object
+shmem_name = 'shared_config'
+
+if args.local_rank == 0:
+    # initial vals in rank0 'no' 'bs' 'ps' 'gs'
+    rank0_inputs = np.array([ 0,   0,   0,   0], dtype=np.uint16)
+    # create named share memory object
+    shmem_object = shared_memory.SharedMemory(name=shmem_name, create=True, size=rank0_inputs.nbytes)
+    # create a NumPy array backed by shmem_object
+    rank_configs = np.ndarray(rank0_inputs.shape, dtype=rank0_inputs.dtype, buffer=shmem_object.buf)
+    # init vals of shmem_object
+    rank_configs[:] = rank0_inputs[:]
+else:
+    # other proc
+    time.sleep(1)      # wait for rank0's creation
+    shmem_object = shared_memory.SharedMemory(name=shmem_name)
+    # create NumPy reference array to shmem_object
+    rank_configs = np.ndarray((4,), dtype=np.uint16, buffer=shmem_object.buf)
+
 while True:
-    cont = input("\nContinue another inference benchmark run? (yes | no) ")
-    if cont.lower() == "no":
-        break
+    if args.local_rank == 0:
+        cont = input("\nContinue another inference benchmark run? (yes | no) ")
+        if cont.lower() == "no":
+            rank_configs[0] = 1  # 1 - 'no'
+            time.sleep(3)
+            shmem_object.close()
+            shmem_object.unlink()
+            break
+        else:
+            rank_configs[0] = 2  # 2 - 'yes'
+    else:
+        while rank_configs[0] == 0:  # wait
+            pass
+        if rank_configs[0] == 1:
+            shmem_object.close()
+            break
 
-    iconfig_s = input("batch_size (1, 2, ..., 64, 128), prompt_len (8, 16, ..., 512, 1024, 1536, ...), new_tokens (16, 32, ..., 256, 512): ")
+    if args.local_rank == 0:
+        iconfig_s = input("batch_size (1, 2, ..., 64, 128), prompt_len (8, 16, ..., 512, 1024, 1536, ...), new_tokens (16, 32, ..., 256, 512): ")
 
-    # get inferencing config parameters
-    try:
-        bs_s, ps_s, gs_s = re.findall('\d+', iconfig_s)
-    except ValueError:
-        bs_s = '1'
-        ps_s = '8'
-        gs_s = '8'
+        # get inferencing config parameters
+        try:
+            bs_s, ps_s, gs_s = re.findall('\d+', iconfig_s)
+        except ValueError:
+            bs_s = '1'
+            ps_s = '8'
+            gs_s = '8'
 
-    # batch size
-    bs = int(bs_s)
-    # prompt size
-    ps = int(ps_s)
-    # generation size
-    gs = int(gs_s)
+        # batch size
+        bs = int(bs_s)
+        # prompt size
+        ps = int(ps_s)
+        # generation size
+        gs = int(gs_s)
 
-    if ps < 8:
-        ps = 8
-    if ps % 2:
-        ps += 1
+        if ps < 8:
+            ps = 8
+        if ps % 2:
+            ps += 1
 
-    ps_s = str(ps)
+        ps_s = str(ps)
+
+        # rank0 update shmem_object
+        rank_configs[1] = bs
+        rank_configs[2] = ps
+        rank_configs[3] = gs
+
+    else:
+        # other proc validate last item: /0
+        while rank_configs[3] == 0:  # wait
+            pass
+        if rank_configs[0] == 2:
+            bs = rank_configs[1]
+            ps = rank_configs[2]
+            gs = rank_configs[3]
+
     if args.local_rank == 0:
         print("Batch size = " + bs_s + ", prompt length = " + ps_s + ", generation length = " + gs_s)
 
@@ -228,6 +277,13 @@ while True:
         torch.cuda.synchronize()
         end = time.time()
         times.append(end - start)
+
+    # reset shmem_object
+    rank_configs[0] = 0
+    rank_configs[1] = 0
+    rank_configs[2] = 0
+    rank_configs[3] = 0
+
 
     time_avg = np.mean(times)
     if args.local_rank == 0:
