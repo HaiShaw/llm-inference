@@ -106,10 +106,10 @@ optional arguments:
 Examples:
 
 ```python
-deepspeed --num_gpus 1 deepspeed/ibench_ds.py --name /data/llama2-7b --batch_size  8 --prompting_length 512 --performance --ds_inference --max_new_tokens  32
-deepspeed --num_gpus 1 deepspeed/ibench_ds.py --name /data/llama2-7b --batch_size 32 --prompting_length 512 --performance --ds_inference --max_new_tokens  64 --use_kernel
-deepspeed --num_gpus 4 deepspeed/ibench_ds.py --name /data/llama65b  --batch_size 16 --prompting_length 512 --performance --ds_inference --max_new_tokens  64 --use_kernel
-deepspeed --num_gpus 8 deepspeed/ibench_ds.py --name /data/opt66b    --batch_size 32 --prompting_length 512 --performance --ds_inference --max_new_tokens 256 --use_kernel
+deepspeed --num_gpus 1 deepspeed/ibench_ds.py --name /data/llama2-7b  --batch_size  8 --prompting_length 512 --performance --ds_inference --max_new_tokens  32
+deepspeed --num_gpus 1 deepspeed/ibench_ds.py --name /data/llama2-7b  --batch_size 32 --prompting_length 512 --performance --ds_inference --max_new_tokens  64 --use_kernel
+deepspeed --num_gpus 4 deepspeed/ibench_ds.py --name /data/llama65b   --batch_size 16 --prompting_length 512 --performance --ds_inference --max_new_tokens  64 --use_kernel
+deepspeed --num_gpus 8 deepspeed/ibench_ds.py --name facebook/opt-66b --batch_size 32 --prompting_length 512 --performance --ds_inference --max_new_tokens 256 --use_kernel
 
 On AMD GPUs, to speedup DS JIT compilation, you may specify GCN architecture code:
 - MI300X: PYTORCH_ROCM_ARCH='gfx940' deepspeed --num_gpus 1 deepspeed/ibench_ds.py --name /data/llama2-7b --batch_size 32 --prompting_length 512 --performance --ds_inference --max_new_tokens 32 --use_kernel
@@ -123,6 +123,10 @@ We support multiple GPUs, multiple nodes, and multiple dimensional parallelism, 
 
 Support and harness around following inference infrastructures are working in progress:
 - Faster Transformer
+- PyTorch FSDP
+
+TODOs:
+- MFU (Model FLOPs Utilization)
 
 
 ### License

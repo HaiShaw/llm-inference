@@ -413,9 +413,10 @@ def main():
 
         # -1 to count 1 token included in Ptime
         Dtime = ((np.array(d_latencies) - Ptime)/(np.array(dlen_actual) - 1)).mean()
-        Ptime -= Dtime
+        # generate 1st token is product of prompting phase, it is no extra, no need to adjust
+        # Ptime -= Dtime
         # error bound 5ms @ lower end
-        Ptime = max(0.005, Ptime)
+        # Ptime = max(0.005, Ptime)
 
 
         # reports
