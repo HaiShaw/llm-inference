@@ -22,12 +22,13 @@ parser.add_argument("--checkpoint_path", required=False, default=None, type=str,
 parser.add_argument("--save_mp_checkpoint_path", required=False, default=None, type=str, help="save-path to store the new model checkpoint")
 parser.add_argument("--batch_size", default=1, type=int, help="batch size")
 parser.add_argument("--dtype", default="float16", type=str, choices=["float32", "float16", "int8"], help="data-type")
+parser.add_argument("--platform", default="MI250", type=str, required=True, help="node arch")
 parser.add_argument("--ds_inference", action='store_true', help="enable ds-inference")
 parser.add_argument("--use_kernel", action='store_true', help="enable kernel-injection")
 parser.add_argument("--replace_method", required=False, default='', type=str, help="replace method['', 'auto']")
 parser.add_argument("--max_tokens", default=1024, type=int, help="maximum tokens used for the text-generation KV-cache")
-parser.add_argument("--prompting_length", default=128, type=int, help="length of prompts in tokens")
-parser.add_argument("--max_new_tokens", default=50, type=int, help="maximum new tokens to generate")
+parser.add_argument("--prompting_length", default=1024, type=int, help="length of prompts in tokens")
+parser.add_argument("--max_new_tokens", default=512, type=int, help="maximum new tokens to generate")
 parser.add_argument("--sampling", action='store_true', help="sample generation mode")
 parser.add_argument("--use_meta_tensor", action='store_true', help="use the meta tensors to initialize model")
 parser.add_argument("--performance", action='store_true', help="enable latency, bandwidth and throughout run")
@@ -108,7 +109,7 @@ for b in range(args.batch_size):
 if args.sampling:
     print("Inferencing with sampling...")
 
-iters = 35 if args.performance else 2 #warmup
+iters = 3 if args.performance else 2 #warmup
 
 # Prefill time
 prefills = []
@@ -129,9 +130,16 @@ times = []
 for i in range(iters):
     torch.cuda.synchronize()
     start = time.time()
-    outputs = pipe(prompts,
-            num_tokens=args.max_new_tokens,
-            do_sample=(args.sampling))
+    if i==2:
+        outputs = pipe(prompts,
+                num_tokens=args.max_new_tokens,
+                do_sample=(args.sampling),
+                tracer=True, platform=args.platform, model=args.name)
+
+    else:
+        outputs = pipe(prompts,
+                num_tokens=args.max_new_tokens,
+                do_sample=(args.sampling))
     torch.cuda.synchronize()
     end = time.time()
     times.append(end - start)
@@ -180,7 +188,7 @@ else:
     # create NumPy reference array to shmem_object
     rank_configs = np.ndarray((4,), dtype=np.uint16, buffer=shmem_object.buf)
 
-while True:
+while False:
     if args.local_rank == 0:
         cont = input("\nContinue another inference benchmark run? (yes | no) ")
         if cont.lower() == "no":

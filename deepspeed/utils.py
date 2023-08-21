@@ -10,6 +10,7 @@ import deepspeed
 import torch
 from huggingface_hub import snapshot_download
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, LlamaTokenizerFast
+from rpdTracerControl import rpdTracerControl
 
 class DSPipeline():
     '''
@@ -60,13 +61,14 @@ class DSPipeline():
     def __call__(self,
                 inputs=["test"],
                 num_tokens=100,
-                do_sample=False):
+                do_sample=False,
+                tracer=False, platform="dummy", model="dummy"):
         if isinstance(inputs, str):
             input_list = [inputs]
         else:
             input_list = inputs
 
-        outputs = self.generate_outputs(input_list, num_tokens=num_tokens, do_sample=do_sample)
+        outputs = self.generate_outputs(input_list, num_tokens=num_tokens, do_sample=do_sample, tracer=tracer, platform=platform, model=model)
         return outputs
 
 
@@ -101,7 +103,8 @@ class DSPipeline():
     def generate_outputs(self,
                          inputs=["test"],
                          num_tokens=100,
-                         do_sample=False):
+                         do_sample=False,
+                         tracer=False, platform="dummy", model="dummy"):
         generate_kwargs = dict(max_new_tokens=num_tokens, do_sample=do_sample)
 
         input_tokens = self.tokenizer.batch_encode_plus(inputs, return_tensors="pt", padding=True)
@@ -114,9 +117,33 @@ class DSPipeline():
         if isinstance(self.tokenizer, LlamaTokenizerFast):
             # NOTE: Check if Llamma can work w/ **input_tokens
             #       'token_type_ids' kwarg not recognized in Llamma generate function
-            outputs = self.model.generate(input_tokens.input_ids, **generate_kwargs)
+            if tracer:
+                rpd_filename = platform + "_" + model.replace('/data/', '') + "_ds.rpd"
+                print("=================rpd_filenanme", rpd_filename)
+                rpdTracerControl.setFilename(name = rpd_filename, append=True)
+                profile = rpdTracerControl()
+                prof = torch.autograd.profiler.emit_nvtx(record_shapes=True)
+                profile.start()
+                prof.__enter__()
+                outputs = self.model.generate(input_tokens.input_ids, **generate_kwargs)
+                prof.__exit__(None, None, None)
+                profile.stop()
+            else:
+                outputs = self.model.generate(input_tokens.input_ids, **generate_kwargs)
         else:
-            outputs = self.model.generate(**input_tokens, **generate_kwargs)
+            if tracer:
+                rpd_filename = platform + "_" + model.replace('/data/', '') + "_ds.rpd"
+                print("=================rpd_filenanme", rpd_filename)
+                rpdTracerControl.setFilename(name = rpd_filename, append=True)
+                profile = rpdTracerControl()
+                prof = torch.autograd.profiler.emit_nvtx(record_shapes=True)
+                profile.start()
+                prof.__enter__()
+                outputs = self.model.generate(**input_tokens, **generate_kwargs)
+                prof.__exit__(None, None, None)
+                profile.stop()
+            else:
+                outputs = self.model.generate(**input_tokens, **generate_kwargs)
         outputs = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
 
         return outputs
