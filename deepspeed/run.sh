@@ -20,7 +20,8 @@ if [ -f "$rpd_file" ] ; then
 fi
 python -m rocpd.schema --create $rpd_file
 
-python ibench_ds.py --name /data/${model} --platform ${platform} --ds_inference --batch_size 1 --prompting_length 1024 --max_new_tokens 512 --performance
+deepspeed --num_gpus 8 ibench_ds.py --platform ${platform} --name /data/${model}  --batch_size 1 --prompting_length 512 --performance --ds_inference --max_new_tokens 64 --use_kernel
+# python ibench_ds.py --name /data/${model} --platform ${platform} --ds_inference --batch_size 1 --prompting_length 1024 --max_new_tokens 512 --performance
 
 if [ -f "$json_file" ] ; then
     rm "$json_file"

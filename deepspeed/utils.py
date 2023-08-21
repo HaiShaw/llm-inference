@@ -125,11 +125,11 @@ class DSPipeline():
                 prof = torch.autograd.profiler.emit_nvtx(record_shapes=True)
                 profile.start()
                 prof.__enter__()
-                outputs = self.model.generate(input_tokens.input_ids, **generate_kwargs)
+                outputs = self.model.generate(input_tokens.input_ids, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
                 prof.__exit__(None, None, None)
                 profile.stop()
             else:
-                outputs = self.model.generate(input_tokens.input_ids, **generate_kwargs)
+                outputs = self.model.generate(input_tokens.input_ids, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
         else:
             if tracer:
                 rpd_filename = platform + "_" + model.replace('/data/', '') + "_ds.rpd"
@@ -139,11 +139,11 @@ class DSPipeline():
                 prof = torch.autograd.profiler.emit_nvtx(record_shapes=True)
                 profile.start()
                 prof.__enter__()
-                outputs = self.model.generate(**input_tokens, **generate_kwargs)
+                outputs = self.model.generate(**input_tokens, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
                 prof.__exit__(None, None, None)
                 profile.stop()
             else:
-                outputs = self.model.generate(**input_tokens, **generate_kwargs)
+                outputs = self.model.generate(**input_tokens, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
         outputs = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
 
         return outputs
