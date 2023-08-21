@@ -4,6 +4,7 @@ import torch
 import argparse
 import numpy as np
 from time import perf_counter
+from rpdTracerControl import rpdTracerControl
 from deepspeed.profiling.flops_profiler import FlopsProfiler
 
 # vocab used for input sequences
@@ -46,6 +47,7 @@ PATH2='/data/llama65b'
 PATH3='/data/falcon40b-instruct'
 PATH4='/data/llama2-70b-chat'
 PATH5='/data/llama2-70b'
+PATH6='/data/llama2-7b-chat'
 
 def main():
 
@@ -164,6 +166,32 @@ def main():
         PATH = PATH4
         from transformers import LlamaForCausalLM, LlamaTokenizer
         tokenizer = LlamaTokenizer.from_pretrained(PATH, padding_side='left')
+        # tokenizer = LlamaTokenizer(PATH)
+        tokenizer.pad_token = tokenizer.eos_token
+        if args.precision == "float16": # pretrained precision : float16
+            # from transformers import LlamaConfig
+            # config = LlamaConfig()
+            # model = LlamaForCausalLM(config)
+            model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.float16, device_map="auto")
+        elif args.precision == "bfloat16":
+            if args.platform == "MI300X":
+                model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_MI300X_llamaII70b)
+            elif args.platform == "2xH100":
+                model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_2xH100_llamaII70b)
+            elif args.platform == "2xMI250":
+                # model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_llamaII70b)
+                from transformers import LlamaConfig
+                config = LlamaConfig()
+                model = LlamaForCausalLM(config)
+            else:
+                sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
+        else:
+            sys.exit("Enter valid --precision (float16 | bfloat16)")
+
+    elif args.model == "llama2-70b":
+        PATH = PATH5
+        from transformers import LlamaForCausalLM, LlamaTokenizer
+        tokenizer = LlamaTokenizer.from_pretrained(PATH, padding_side='left')
         tokenizer.pad_token = tokenizer.eos_token
         if args.precision == "float16": # pretrained precision : float16
             model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.float16, device_map="auto")
@@ -178,9 +206,9 @@ def main():
                 sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
         else:
             sys.exit("Enter valid --precision (float16 | bfloat16)")
-
-    elif args.model == "llama2-70b":
-        PATH = PATH5
+    
+    elif args.model == "llama2-7b-chat":
+        PATH = PATH6
         from transformers import LlamaForCausalLM, LlamaTokenizer
         tokenizer = LlamaTokenizer.from_pretrained(PATH, padding_side='left')
         tokenizer.pad_token = tokenizer.eos_token
@@ -216,15 +244,18 @@ def main():
         d_latencies = []
         dlen_actual = []    # actual decoding length (for large number of new tokens to generate, e.g. 512, some models fall short)
 
-        iconfig_s = input("batch_size (1, 2, ..., 64, 128), prompt_len (8, 16, ..., 512, 1024, 1536, ...), new_tokens (16, 32, ..., 256, 512): ")
+        # iconfig_s = input("batch_size (1, 2, ..., 64, 128), prompt_len (8, 16, ..., 512, 1024, 1536, ...), new_tokens (16, 32, ..., 256, 512): ")
 
         # get inferencing config parameters
-        try:
-            bs_s, ps_s, gs_s = re.findall('\d+', iconfig_s)
-        except ValueError:
-            bs_s = '1'
-            ps_s = '8'
-            gs_s = '8'
+        # try:
+        #     bs_s, ps_s, gs_s = re.findall('\d+', iconfig_s)
+        # except ValueError:
+        #     bs_s = '1'
+        #     ps_s = '8'
+        #     gs_s = '8'
+        bs_s = '1'
+        ps_s = '1024'
+        gs_s = '512'
 
         # batch size
         bs = int(bs_s)
@@ -244,6 +275,7 @@ def main():
 
         # 0 - warmup, 1 - profiling if set
         for i in range(2+args.n):
+            print("================ iteration: ", i)
             prompts = []
             for b in range(bs):
                 if args.d:
@@ -326,7 +358,19 @@ def main():
                         prof_pref.end_profile()
                     else:
                         start_time = perf_counter()
-                        generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1)
+                        if i == 2:
+                            rpd_filename = args.platform + "_" + args.model + ".rpd"
+                            print("=================rpd_filenanme", rpd_filename)
+                            rpdTracerControl.setFilename(name = rpd_filename, append=True)
+                            profile = rpdTracerControl()
+                            prof = torch.autograd.profiler.emit_nvtx(record_shapes=True)
+                            profile.start()
+                            prof.__enter__()
+                            generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1)
+                            prof.__exit__(None, None, None)
+                            profile.stop()
+                        else:
+                            generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1)
                         prefill_latency = perf_counter() - start_time
 
             # ignore the 1st (warmup) and 2nd (warmup/profiling) round
@@ -425,7 +469,7 @@ def main():
         print("Decode latency per token on output of length: " + gs_s + " = " + "{:.3f}".format(1000 * Dtime) + "ms")
 
 
-        cont = input("\nContinue another inference benchmark run? (yes | no) ")
+        cont = "no" #input("\nContinue another inference benchmark run? (yes | no) ")
         if cont.lower() == "no":
             break
 
