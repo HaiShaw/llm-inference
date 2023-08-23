@@ -109,7 +109,7 @@ for b in range(args.batch_size):
 if args.sampling:
     print("Inferencing with sampling...")
 
-iters = 3 if args.performance else 2 #warmup
+iters = 35 if args.performance else 2 #warmup
 
 # Prefill time
 prefills = []

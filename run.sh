@@ -1,5 +1,5 @@
-platform=MI300X
-model=llama2-7b-chat
+platform=H100
+model=llama2-70b-chat
 
 if [ ! -d  "/data/${model}" ]; then
     mkdir /data/${model}
@@ -20,7 +20,7 @@ if [ -f "$rpd_file" ] ; then
 fi
 python -m rocpd.schema --create $rpd_file
 
-python ibench_hf.py --model ${model} --platform ${platform} --n 1
+python ibench_hf.py --model ${model} --platform ${platform}
 
 if [ -f "$json_file" ] ; then
     rm "$json_file"

@@ -166,12 +166,8 @@ def main():
         PATH = PATH4
         from transformers import LlamaForCausalLM, LlamaTokenizer
         tokenizer = LlamaTokenizer.from_pretrained(PATH, padding_side='left')
-        # tokenizer = LlamaTokenizer(PATH)
         tokenizer.pad_token = tokenizer.eos_token
         if args.precision == "float16": # pretrained precision : float16
-            # from transformers import LlamaConfig
-            # config = LlamaConfig()
-            # model = LlamaForCausalLM(config)
             model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.float16, device_map="auto")
         elif args.precision == "bfloat16":
             if args.platform == "MI300X":
@@ -179,10 +175,7 @@ def main():
             elif args.platform == "2xH100":
                 model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_2xH100_llamaII70b)
             elif args.platform == "2xMI250":
-                # model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_llamaII70b)
-                from transformers import LlamaConfig
-                config = LlamaConfig()
-                model = LlamaForCausalLM(config)
+                model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_llamaII70b)
             else:
                 sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
         else:
@@ -275,7 +268,7 @@ def main():
 
         # 0 - warmup, 1 - profiling if set
         for i in range(2+args.n):
-            print("================ iteration: ", i)
+            print("\n================ timing iteration: ", i )
             prompts = []
             for b in range(bs):
                 if args.d:
@@ -358,19 +351,7 @@ def main():
                         prof_pref.end_profile()
                     else:
                         start_time = perf_counter()
-                        if i == 2:
-                            rpd_filename = args.platform + "_" + args.model + ".rpd"
-                            print("=================rpd_filenanme", rpd_filename)
-                            rpdTracerControl.setFilename(name = rpd_filename, append=True)
-                            profile = rpdTracerControl()
-                            prof = torch.autograd.profiler.emit_nvtx(record_shapes=True)
-                            profile.start()
-                            prof.__enter__()
-                            generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1)
-                            prof.__exit__(None, None, None)
-                            profile.stop()
-                        else:
-                            generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1)
+                        generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1)
                         prefill_latency = perf_counter() - start_time
 
             # ignore the 1st (warmup) and 2nd (warmup/profiling) round
@@ -468,8 +449,42 @@ def main():
         print("Prefill phase latency on prompt of length   : " + ps_s + " = " + "{:.3f}".format(1000 * Ptime) + "ms")
         print("Decode latency per token on output of length: " + gs_s + " = " + "{:.3f}".format(1000 * Dtime) + "ms")
 
+        for i in range(5):
+            print("\n================ tracing iteration: ", i )
+            prompts = []
+            for b in range(bs):
+                if args.d:
+                    sequence = inputs               # len of 5, plus 1 below count for </s>
+                    neg_nums = (ps - (5+1))//2      # number of negative numbers to append
+                    for num in range(neg_nums, 0, -1):
+                        sequence = sequence + " -" + str(num)
+                    sequence = sequence + " 0"
+                else:
+                    prompt = []
+                    for t in range(ps):
+                        token = np.random.choice(itokens)
+                        prompt.append(token)
+                    # a sample sequence
+                    sequence = " ".join(prompt)
+                prompts.append(sequence)
 
-        cont = "no" #input("\nContinue another inference benchmark run? (yes | no) ")
+            # input_ids = tokenizer(prompts, return_tensors="pt", truncation=True, padding=True).input_ids.cuda()
+            input_ids = tokenizer(prompts, return_tensors="pt", padding=True).input_ids.cuda()
+            if i == 4:
+                rpd_filename = args.platform + "_" + args.model + ".rpd"
+                print("=================rpd_filenanme", rpd_filename)
+                rpdTracerControl.setFilename(name = rpd_filename, append=True)
+                profile = rpdTracerControl()
+                prof = torch.autograd.profiler.emit_nvtx(record_shapes=True)
+                profile.start()
+                prof.__enter__()
+                generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1))
+                prof.__exit__(None, None, None)
+                profile.stop()
+            else:
+                generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1))
+
+        cont = "no"#("\nContinue another inference benchmark run? (yes | no) ")
         if cont.lower() == "no":
             break
 
