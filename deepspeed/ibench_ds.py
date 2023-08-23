@@ -130,16 +130,9 @@ times = []
 for i in range(iters):
     torch.cuda.synchronize()
     start = time.time()
-    if i==2:
-        outputs = pipe(prompts,
-                num_tokens=args.max_new_tokens,
-                do_sample=(args.sampling),
-                tracer=True, platform=args.platform, model=args.name)
-
-    else:
-        outputs = pipe(prompts,
-                num_tokens=args.max_new_tokens,
-                do_sample=(args.sampling))
+    outputs = pipe(prompts,
+            num_tokens=args.max_new_tokens,
+            do_sample=(args.sampling))
     torch.cuda.synchronize()
     end = time.time()
     times.append(end - start)
@@ -187,6 +180,20 @@ else:
     shmem_object = shared_memory.SharedMemory(name=shmem_name)
     # create NumPy reference array to shmem_object
     rank_configs = np.ndarray((4,), dtype=np.uint16, buffer=shmem_object.buf)
+
+for i in range(10):
+    torch.cuda.synchronize()
+    start = time.time()
+    if i==5:
+        outputs = pipe(prompts,
+                num_tokens=args.max_new_tokens,
+                do_sample=(args.sampling),
+                tracer=True, platform=args.platform, model=args.name)
+    else:
+        outputs = pipe(prompts,
+            num_tokens=args.max_new_tokens,
+            do_sample=(args.sampling))
+    torch.cuda.synchronize()
 
 while False:
     if args.local_rank == 0:
