@@ -478,11 +478,11 @@ def main():
                 prof = torch.autograd.profiler.emit_nvtx(record_shapes=True)
                 profile.start()
                 prof.__enter__()
-                generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1))
+                generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=15)
                 prof.__exit__(None, None, None)
                 profile.stop()
             else:
-                generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1))
+                generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=15)
 
         cont = "no"#("\nContinue another inference benchmark run? (yes | no) ")
         if cont.lower() == "no":
