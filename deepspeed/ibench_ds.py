@@ -10,6 +10,7 @@ import torch
 import time
 from utils import DSPipeline
 from deepspeed.runtime.utils import see_memory_usage
+import exel_autofill
 
 # final deterministic prompts like: "An increasing sequence: -1 0" (for prompt len = 8)
 # deterministic prompts input base: len = 5 (with hidden </s>)
@@ -149,12 +150,19 @@ if args.local_rank == 0:
     print("Batch size: " + str(args.batch_size))
 
 
+
 if args.local_rank == 0:
     if args.debug:
         for i, o in zip(prompts, outputs):
             print(f"\nin={i}\nout={o}\n{'-'*60}")
     if args.performance:
         print_perf_stats(args.batch_size, map(lambda t: t / args.max_new_tokens, times), pipe.model.config)
+    
+    prefill = "{:.3f}".format(1000 * prefill_avg)
+    decode = "{:.3f}".format(1000 * decode_avg)
+    exel_autofill.fill(prefill, "prefill", args.batch_size, args.prompting_length, args.max_new_tokens, args.world_size, True, "Llama2-7b.xlsx")
+    time.sleep(0.5)
+    exel_autofill.fill(decode, "decode", args.batch_size, args.prompting_length, args.max_new_tokens, args.world_size, True, "Llama2-7b.xlsx")
 
 
 ######################################################################################
@@ -163,36 +171,35 @@ if args.local_rank == 0:
 ######################################################################################
 
 # Name for the shared object
-shmem_name = 'shared_config'
+# shmem_name = 'shared_config'
 
-if args.local_rank == 0:
-    # initial vals in rank0 'no' 'bs' 'ps' 'gs'
-    rank0_inputs = np.array([ 0,   0,   0,   0], dtype=np.uint16)
-    # create named share memory object
-    shmem_object = shared_memory.SharedMemory(name=shmem_name, create=True, size=rank0_inputs.nbytes)
-    # create a NumPy array backed by shmem_object
-    rank_configs = np.ndarray(rank0_inputs.shape, dtype=rank0_inputs.dtype, buffer=shmem_object.buf)
-    # init vals of shmem_object
-    rank_configs[:] = rank0_inputs[:]
-else:
-    # other proc
-    time.sleep(1)      # wait for rank0's creation
-    shmem_object = shared_memory.SharedMemory(name=shmem_name)
-    # create NumPy reference array to shmem_object
-    rank_configs = np.ndarray((4,), dtype=np.uint16, buffer=shmem_object.buf)
+# if args.local_rank == 0:
+#     # initial vals in rank0 'no' 'bs' 'ps' 'gs'
+#     rank0_inputs = np.array([ 0,   0,   0,   0], dtype=np.uint16)
+#     # create named share memory object
+#     shmem_object = shared_memory.SharedMemory(name=shmem_name, create=True, size=rank0_inputs.nbytes)
+#     # create a NumPy array backed by shmem_object
+#     rank_configs = np.ndarray(rank0_inputs.shape, dtype=rank0_inputs.dtype, buffer=shmem_object.buf)
+#     # init vals of shmem_object
+#     rank_configs[:] = rank0_inputs[:]
+# else:
+#     # other proc
+#     time.sleep(1)      # wait for rank0's creation
+#     shmem_object = shared_memory.SharedMemory(name=shmem_name)
+#     # create NumPy reference array to shmem_object
+#     rank_configs = np.ndarray((4,), dtype=np.uint16, buffer=shmem_object.buf)
 
-for i in range(10):
-    torch.cuda.synchronize()
-    if i==5:
-        outputs = pipe(prompts,
-                num_tokens=args.max_new_tokens,
-                do_sample=(args.sampling),
-                tracer=True, platform=args.platform, model=args.name)
-    else:
-        outputs = pipe(prompts,
-            num_tokens=args.max_new_tokens,
-            do_sample=(args.sampling))
-    torch.cuda.synchronize()
+# for i in range(10):
+#     torch.cuda.synchronize()
+#     if i==5:
+#         outputs = pipe(prompts,
+#                 num_tokens=args.max_new_tokens,
+#                 do_sample=(args.sampling))
+#     else:
+#         outputs = pipe(prompts,
+#             num_tokens=args.max_new_tokens,
+#             do_sample=(args.sampling))
+#     torch.cuda.synchronize()
 
 while False:
     if args.local_rank == 0:
