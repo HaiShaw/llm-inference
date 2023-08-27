@@ -183,7 +183,6 @@ else:
 
 for i in range(10):
     torch.cuda.synchronize()
-    start = time.time()
     if i==5:
         outputs = pipe(prompts,
                 num_tokens=args.max_new_tokens,

@@ -48,6 +48,7 @@ PATH3='/data/falcon40b-instruct'
 PATH4='/data/llama2-70b-chat'
 PATH5='/data/llama2-70b'
 PATH6='/data/llama2-7b-chat'
+PATH7='/data/llama2-13b-chat'
 
 def main():
 
@@ -202,6 +203,25 @@ def main():
     
     elif args.model == "llama2-7b-chat":
         PATH = PATH6
+        from transformers import LlamaForCausalLM, LlamaTokenizer
+        tokenizer = LlamaTokenizer.from_pretrained(PATH, padding_side='left')
+        tokenizer.pad_token = tokenizer.eos_token
+        if args.precision == "float16": # pretrained precision : float16
+            model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.float16, device_map="auto")
+        elif args.precision == "bfloat16":
+            if args.platform == "MI300X":
+                model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_MI300X_llamaII70b)
+            elif args.platform == "2xH100":
+                model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_2xH100_llamaII70b)
+            elif args.platform == "2xMI250":
+                model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_llamaII70b)
+            else:
+                sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
+        else:
+            sys.exit("Enter valid --precision (float16 | bfloat16)")
+
+    elif args.model == "llama2-13b-chat":
+        PATH = PATH7
         from transformers import LlamaForCausalLM, LlamaTokenizer
         tokenizer = LlamaTokenizer.from_pretrained(PATH, padding_side='left')
         tokenizer.pad_token = tokenizer.eos_token
