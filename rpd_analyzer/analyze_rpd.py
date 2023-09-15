@@ -6,6 +6,11 @@ import csv
 
 def extract_additional_metrics(df_table, rpd_file):
 
+    """_summary_
+        df_table: Pandas DF
+        rpd_file: str
+    """
+
     kernel_launch_info = defaultdict(int)
     kernel_name_set = set()
     col_to_analyze = ['kernelName', 'gridX', 'gridY', 'gridZ', 
@@ -41,6 +46,13 @@ def extract_additional_metrics(df_table, rpd_file):
                             [(f"gridX-gridY-gridZ-wgX-wgY-wgZ: {k}", f"# of calls - {cur_kernel_launch_param_dict[k][0]}") for k in cur_kernel_launch_param_dict.keys()])      
 
 def extract_table(db, rpd_file, table_name, show_additional_metrics=False):
+
+    """_summary_
+        db: sqlite3
+        rpd_file: str
+        table_name: str
+        show_additional_metrics: bool
+    """
     
     table = pd.read_sql_query("SELECT * from %s;" % table_name, db)
     table.to_csv(f"{rpd_file}_{table_name}.csv")
@@ -51,7 +63,11 @@ def extract_table(db, rpd_file, table_name, show_additional_metrics=False):
     db.close()
 
 def query_table(db, table_name, num_rows):
-    """
+    
+    """_summary_
+        db: sqlite3
+        table_name: str
+        num_rows: int
     """
      
     cursor = db.cursor()
