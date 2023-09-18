@@ -183,15 +183,9 @@ else:
 
 for i in range(10):
     torch.cuda.synchronize()
-    if i==5:
-        outputs = pipe(prompts,
-                num_tokens=args.max_new_tokens,
-                do_sample=(args.sampling),
-                tracer=True, platform=args.platform, model=args.name)
-    else:
-        outputs = pipe(prompts,
-            num_tokens=args.max_new_tokens,
-            do_sample=(args.sampling))
+    outputs = pipe(prompts,
+        num_tokens=args.max_new_tokens,
+        do_sample=(args.sampling))
     torch.cuda.synchronize()
 
 while False:
