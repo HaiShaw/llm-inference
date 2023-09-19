@@ -77,6 +77,24 @@ def main():
         help="number of iterations to inference; report an average of this number of runs (default: 10)"
     )
     parser.add_argument(
+        "--batch_size",
+        type=int,
+        default=2,
+        help="batch size to use for inference (default: 2)"
+    )
+    parser.add_argument(
+        "--prompt_len",
+        type=int,
+        default=512,
+        help="input prompt length used for inference (default: 512)"
+    )
+    parser.add_argument(
+        "--new_tokens",
+        type=int,
+        default=512,
+        help="output prompt length used for new token generation durring inference (default: 512)"
+    )
+    parser.add_argument(
         "--d",
         action="store_true",
         default=False,
@@ -100,6 +118,7 @@ def main():
         default=False,
         help="Enable DeepSpeed Flops Profiler Profiling (default: off)"
     )
+    
     args = parser.parse_args()
 
     if args.model == "opt66b":
@@ -216,22 +235,12 @@ def main():
         d_latencies = []
         dlen_actual = []    # actual decoding length (for large number of new tokens to generate, e.g. 512, some models fall short)
 
-        iconfig_s = input("batch_size (1, 2, ..., 64, 128), prompt_len (8, 16, ..., 512, 1024, 1536, ...), new_tokens (16, 32, ..., 256, 512): ")
-
-        # get inferencing config parameters
-        try:
-            bs_s, ps_s, gs_s = re.findall('\d+', iconfig_s)
-        except ValueError:
-            bs_s = '1'
-            ps_s = '8'
-            gs_s = '8'
-
         # batch size
-        bs = int(bs_s)
+        bs = args.batch_size
         # prompt size
-        ps = int(ps_s)
+        ps = args.prompt_len
         # generation size
-        gs = int(gs_s)
+        gs = args.new_tokens
 
         if ps < 8:
             ps = 8
