@@ -40,13 +40,6 @@ DM_2xH100_falcon40b={'transformer.word_embeddings': 0, 'lm_head': 0, 'transforme
 
 DM_2xH100_llamaII70b={'model.embed_tokens': 0, 'model.layers.0': 0, 'model.layers.1': 0, 'model.layers.2': 0, 'model.layers.3': 0, 'model.layers.4': 0, 'model.layers.5': 0, 'model.layers.6': 0, 'model.layers.7': 0, 'model.layers.8': 0, 'model.layers.9': 0, 'model.layers.10': 0, 'model.layers.11': 0, 'model.layers.12': 0, 'model.layers.13': 0, 'model.layers.14': 0, 'model.layers.15': 0, 'model.layers.16': 0, 'model.layers.17': 0, 'model.layers.18': 0, 'model.layers.19': 0, 'model.layers.20': 0, 'model.layers.21': 0, 'model.layers.22': 0, 'model.layers.23': 0, 'model.layers.24': 0, 'model.layers.25': 0, 'model.layers.26': 0, 'model.layers.27': 0, 'model.layers.28': 0, 'model.layers.29': 0, 'model.layers.30': 0, 'model.layers.31': 0, 'model.layers.32': 0, 'model.layers.33': 0, 'model.layers.34': 0, 'model.layers.35': 0, 'model.layers.36': 0, 'model.layers.37': 0, 'model.layers.38': 0, 'model.layers.39': 0, 'model.layers.40': 1, 'model.layers.41': 1, 'model.layers.42': 1, 'model.layers.43': 1, 'model.layers.44': 1, 'model.layers.45': 1, 'model.layers.46': 1, 'model.layers.47': 1, 'model.layers.48': 1, 'model.layers.49': 1, 'model.layers.50': 1, 'model.layers.51': 1, 'model.layers.52': 1, 'model.layers.53': 1, 'model.layers.54': 1, 'model.layers.55': 1, 'model.layers.56': 1, 'model.layers.57': 1, 'model.layers.58': 1, 'model.layers.59': 1, 'model.layers.60': 1, 'model.layers.61': 1, 'model.layers.62': 1, 'model.layers.63': 1, 'model.layers.64': 1, 'model.layers.65': 1, 'model.layers.66': 1, 'model.layers.67': 1, 'model.layers.68': 1, 'model.layers.69': 1, 'model.layers.70': 1, 'model.layers.71': 1, 'model.layers.72': 1, 'model.layers.73': 1, 'model.layers.74': 1, 'model.layers.75': 1, 'model.layers.76': 1, 'model.layers.77': 1, 'model.layers.78': 1, 'model.layers.79': 1, 'model.norm': 1, 'lm_head': 1}
 
-# path to model files: tokenizer and weights
-PATH1='/data/opt66b'
-PATH2='/data/llama65b'
-PATH3='/data/falcon40b-instruct'
-PATH4='/data/llama2-70b-chat'
-PATH5='/data/llama2-70b'
-
 def main():
 
     # Training settings
@@ -54,9 +47,15 @@ def main():
     parser.add_argument(
         "--model",
         type=str,
-        default="opt66b",
-        help="name of LLM (opt66b | llama65b | falcon40b-instruct | llama2-70b-chat | llama2-70b) for inference (default: opt66b)"
+        default="llama2-70b-chat",
+        help="name of LLM (opt66b | llama65b | falcon40b-instruct | llama2-70b-chat | llama2-70b) for inference (default: llama2-70b-chat)"
     )
+    parser.add_argument(
+        "--model_path",
+        type=str,
+        default="/data/llama2-70b-chat/",
+        help="path to huggingface model weights (default: MI300X)"
+    ) 
     parser.add_argument(
         "--platform",
         type=str,
@@ -122,96 +121,91 @@ def main():
     args = parser.parse_args()
 
     if args.model == "opt66b":
-        PATH = PATH1
         from transformers import AutoModelForCausalLM, AutoTokenizer, set_seed
-        tokenizer = AutoTokenizer.from_pretrained(PATH, use_fast=False, padding_side='left')
-        # tokenizer = AutoTokenizer.from_pretrained(PATH, padding_side='left')
+        tokenizer = AutoTokenizer.from_pretrained(args.model_path, use_fast=False, padding_side='left')
+        # tokenizer = AutoTokenizer.from_pretrained(args.model_path, padding_side='left')
         tokenizer.pad_token = tokenizer.eos_token
         if args.precision == "float16":     # pretrained precision : float16
-            model = AutoModelForCausalLM.from_pretrained(PATH, torch_dtype=torch.float16, device_map="auto")
+            model = AutoModelForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.float16, device_map="auto")
         elif args.precision == "bfloat16":
             if args.platform == "MI300X":
-                model = AutoModelForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_MI300X_opt66b)
+                model = AutoModelForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_MI300X_opt66b)
             elif args.platform == "2xH100":
-                model = AutoModelForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_2xH100_opt66b)
+                model = AutoModelForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_2xH100_opt66b)
             elif args.platform == "2xMI250":
-                 model = AutoModelForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_opt66b)
+                 model = AutoModelForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_opt66b)
             else:
                 sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
         else:
             sys.exit("Enter valid --precision (float16 | bfloat16)")
 
     elif args.model == "llama65b":
-        PATH = PATH2
         from transformers import LlamaForCausalLM, LlamaTokenizer
-        tokenizer = LlamaTokenizer.from_pretrained(PATH, padding_side='left')
+        tokenizer = LlamaTokenizer.from_pretrained(args.model_path, padding_side='left')
         tokenizer.pad_token = tokenizer.eos_token
         if args.precision == "float16": # pretrained precision : float16
-            model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.float16, device_map="auto")
+            model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.float16, device_map="auto")
         elif args.precision == "bfloat16":
             if args.platform == "MI300X":
-                model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_MI300X_llama65b)
+                model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_MI300X_llama65b)
             elif args.platform == "2xH100":
-                model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_2xH100_llama65b)
+                model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_2xH100_llama65b)
             elif args.platform == "2xMI250":
-                model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_llama65b)
+                model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_llama65b)
             else:
                 sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
         else:
             sys.exit("Enter valid --precision (float16 | bfloat16)")
 
     elif args.model == "falcon40b-instruct":
-        PATH = PATH3
         from transformers import AutoModelForCausalLM, AutoTokenizer
-        tokenizer = AutoTokenizer.from_pretrained(PATH, padding_side='left')
+        tokenizer = AutoTokenizer.from_pretrained(args.model_path, padding_side='left')
         tokenizer.pad_token = tokenizer.eos_token
         if args.precision == "bfloat16":    # pretrained precision : bfloat16
-            model = AutoModelForCausalLM.from_pretrained(PATH, trust_remote_code=True, torch_dtype=torch.bfloat16, device_map="auto")
+            model = AutoModelForCausalLM.from_pretrained(args.model_path, trust_remote_code=True, torch_dtype=torch.bfloat16, device_map="auto")
         elif args.precision == "float16":
             if args.platform == "MI300X":
-                model = AutoModelForCausalLM.from_pretrained(PATH, trust_remote_code=True, torch_dtype=torch.float16, device_map=DM_MI300X_falcon40b)
+                model = AutoModelForCausalLM.from_pretrained(args.model_path, trust_remote_code=True, torch_dtype=torch.float16, device_map=DM_MI300X_falcon40b)
             elif args.platform == "2xH100":
-                model = AutoModelForCausalLM.from_pretrained(PATH, trust_remote_code=True, torch_dtype=torch.float16, device_map=DM_2xH100_falcon40b)
+                model = AutoModelForCausalLM.from_pretrained(args.model_path, trust_remote_code=True, torch_dtype=torch.float16, device_map=DM_2xH100_falcon40b)
             elif args.platform == "2xMI250":
-                model = AutoModelForCausalLM.from_pretrained(PATH, trust_remote_code=True, torch_dtype=torch.float16, device_map=DM_2xMI250_falcon40b)
+                model = AutoModelForCausalLM.from_pretrained(args.model_path, trust_remote_code=True, torch_dtype=torch.float16, device_map=DM_2xMI250_falcon40b)
             else:
                 sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
         else:
             sys.exit("Enter valid --precision (float16 | bfloat16)")
 
     elif args.model == "llama2-70b-chat":
-        PATH = PATH4
         from transformers import LlamaForCausalLM, LlamaTokenizer
-        tokenizer = LlamaTokenizer.from_pretrained(PATH, padding_side='left')
+        tokenizer = LlamaTokenizer.from_pretrained(args.model_path, padding_side='left')
         tokenizer.pad_token = tokenizer.eos_token
         if args.precision == "float16": # pretrained precision : float16
-            model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.float16, device_map="auto")
+            model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.float16, device_map="auto")
         elif args.precision == "bfloat16":
             if args.platform == "MI300X":
-                model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_MI300X_llamaII70b)
+                model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_MI300X_llamaII70b)
             elif args.platform == "2xH100":
-                model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_2xH100_llamaII70b)
+                model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_2xH100_llamaII70b)
             elif args.platform == "2xMI250":
-                model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_llamaII70b)
+                model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_llamaII70b)
             else:
                 sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
         else:
             sys.exit("Enter valid --precision (float16 | bfloat16)")
 
     elif args.model == "llama2-70b":
-        PATH = PATH5
         from transformers import LlamaForCausalLM, LlamaTokenizer
-        tokenizer = LlamaTokenizer.from_pretrained(PATH, padding_side='left')
+        tokenizer = LlamaTokenizer.from_pretrained(args.model_path, padding_side='left')
         tokenizer.pad_token = tokenizer.eos_token
         if args.precision == "float16": # pretrained precision : float16
-            model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.float16, device_map="auto")
+            model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.float16, device_map="auto")
         elif args.precision == "bfloat16":
             if args.platform == "MI300X":
-                model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_MI300X_llamaII70b)
+                model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_MI300X_llamaII70b)
             elif args.platform == "2xH100":
-                model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_2xH100_llamaII70b)
+                model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_2xH100_llamaII70b)
             elif args.platform == "2xMI250":
-                model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_llamaII70b)
+                model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_llamaII70b)
             else:
                 sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
         else:
