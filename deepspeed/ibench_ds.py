@@ -18,6 +18,7 @@ inputs = "An increasing sequence:"
 parser = ArgumentParser()
 
 parser.add_argument("--name", required=True, type=str, help="model_name")
+parser.add_argument("--cudaGraph", default=False, action="store_true")
 parser.add_argument("--checkpoint_path", required=False, default=None, type=str, help="model checkpoint path")
 parser.add_argument("--save_mp_checkpoint_path", required=False, default=None, type=str, help="save-path to store the new model checkpoint")
 parser.add_argument("--batch_size", default=1, type=int, help="batch size")
@@ -75,7 +76,8 @@ pipe = DSPipeline(model_name=args.name,
                   dtype=data_type,
                   is_meta=args.use_meta_tensor,
                   device=args.local_rank,
-                  checkpoint_path=args.checkpoint_path)
+                  checkpoint_path=args.checkpoint_path,
+                  cudaGraph=args.cudaGraph)
 if args.local_rank == 0:
     print(f"initialization time: {(time.time()-t0) * 1000}ms")
     see_memory_usage("after init", True)
@@ -97,6 +99,9 @@ if args.ds_inference:
 if args.local_rank == 0:
     see_memory_usage("after init_inference", True)
 
+if args.cudaGraph:
+    pipe.init_cudaGraph()
+
 prompts = []
 for b in range(args.batch_size):
     sequence = inputs                                  # len of 5, plus 1 below count for </s>
@@ -109,7 +114,7 @@ for b in range(args.batch_size):
 if args.sampling:
     print("Inferencing with sampling...")
 
-iters = 35 if args.performance else 2 #warmup
+iters = 200 if args.performance else 2 #warmup
 
 # Prefill time
 prefills = []
@@ -123,7 +128,7 @@ for i in range(iters):
     end = time.time()
     prefills.append(end - start)
 
-prefill_avg = np.mean(prefills)
+prefill_avg = np.mean(prefills[10:])
 
 # Total generation time
 times = []
@@ -137,7 +142,7 @@ for i in range(iters):
     end = time.time()
     times.append(end - start)
 
-time_avg = np.mean(times)
+time_avg = np.mean(times[10:])
 if args.local_rank == 0:
     print(f"\ntotal generation time is {time_avg} sec")
 

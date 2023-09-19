@@ -21,10 +21,12 @@ class DSPipeline():
                  dtype=torch.float16,
                  is_meta=True,
                  device=-1,
-                 checkpoint_path=None
+                 checkpoint_path=None,
+                 cudaGraph=False
                  ):
         self.model_name = model_name
         self.dtype = dtype
+        self.cudaGraph=cudaGraph
 
         if isinstance(device, torch.device):
             self.device = device
@@ -97,7 +99,32 @@ class DSPipeline():
                 json.dump(data, f)
 
         return repo_root, checkpoints_json
+    
+    def init_cudaGraph(self):
+        inputs = ["test"]
+        input_tokens = self.generate_tokens(inputs)
+        self.model.cuda().to(self.device)
 
+        generate_kwargs = dict(max_new_tokens=32, do_sample=False)
+        self.g = torch.cuda.CUDAGraph()
+        self.static_input = input_tokens.input_ids
+
+        if isinstance(self.tokenizer, LlamaTokenizerFast):
+            outputs = self.model.generate(self.static_input, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
+            
+            with torch.cuda.graph(self.g):
+                self.static_output = self.model.generate(self.static_input, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
+        else:
+            outputs = self.model.generate(**self.static_input, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
+            with torch.cuda.graph(self.g):
+                self.static_output = self.model.generate(**self.static_input, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
+    
+    def generate_tokens(self, inputs):
+        input_tokens = self.tokenizer.batch_encode_plus(inputs, return_tensors="pt", padding=True)
+        for t in input_tokens:
+            if torch.is_tensor(input_tokens[t]):
+                input_tokens[t] = input_tokens[t].to(self.device)
+        return input_tokens
 
     def generate_outputs(self,
                          inputs=["test"],
@@ -106,21 +133,29 @@ class DSPipeline():
                          tracer=False, platform="dummy", model="dummy"):
         generate_kwargs = dict(max_new_tokens=num_tokens, do_sample=do_sample)
 
-        input_tokens = self.tokenizer.batch_encode_plus(inputs, return_tensors="pt", padding=True)
-        for t in input_tokens:
-            if torch.is_tensor(input_tokens[t]):
-                input_tokens[t] = input_tokens[t].to(self.device)
+        input_tokens = self.generate_tokens(inputs)
 
-        self.model.cuda().to(self.device)
+        if self.cudaGraph:
+            # pass
+            self.static_input = input_tokens
+            self.g.replay()
+            outputs = self.static_output
 
-        if isinstance(self.tokenizer, LlamaTokenizerFast):
-            # NOTE: Check if Llamma can work w/ **input_tokens
-            #       'token_type_ids' kwarg not recognized in Llamma generate function
-            print("==================== in LlamaTokenizerFast")
-            outputs = self.model.generate(input_tokens.input_ids, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
         else:
-            print("==================== in else")
-            outputs = self.model.generate(**input_tokens, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
+            self.model.cuda().to(self.device)
+
+            if isinstance(self.tokenizer, LlamaTokenizerFast):
+                # NOTE: Check if Llamma can work w/ **input_tokens
+                #       'token_type_ids' kwarg not recognized in Llamma generate function
+                outputs = self.model.generate(input_tokens.input_ids, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
+                # g = torch.cuda.CUDAGraph()
+                # with torch.cuda.graph(g):
+                #     outputs = self.model.generate(input_tokens.input_ids, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
+
+                # g.replay()
+
+            else:
+                outputs = self.model.generate(**input_tokens, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
         outputs = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
 
         return outputs
