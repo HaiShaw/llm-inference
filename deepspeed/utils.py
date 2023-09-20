@@ -100,9 +100,8 @@ class DSPipeline():
 
         return repo_root, checkpoints_json
     
-    def init_cudaGraph(self):
-        inputs = ["test"]
-        input_tokens = self.generate_tokens(inputs)
+    def init_cudaGraph(self, prompts):
+        input_tokens = self.generate_tokens(prompts)
         self.model.cuda().to(self.device)
 
         generate_kwargs = dict(max_new_tokens=32, do_sample=False)
@@ -138,6 +137,9 @@ class DSPipeline():
         if self.cudaGraph:
             # pass
             self.static_input = input_tokens
+
+            print("===========", len(input_tokens[0]))
+            print("===========", len(inputs))
             self.g.replay()
             outputs = self.static_output
 

@@ -99,9 +99,6 @@ if args.ds_inference:
 if args.local_rank == 0:
     see_memory_usage("after init_inference", True)
 
-if args.cudaGraph:
-    pipe.init_cudaGraph()
-
 prompts = []
 for b in range(args.batch_size):
     sequence = inputs                                  # len of 5, plus 1 below count for </s>
@@ -111,25 +108,15 @@ for b in range(args.batch_size):
     sequence = sequence + " 0"
     prompts.append(sequence)
 
+if args.cudaGraph:
+    pipe.init_cudaGraph(prompts)
+
 if args.sampling:
     print("Inferencing with sampling...")
 
 iters = 200 if args.performance else 2 #warmup
 
 # Prefill time
-prefills = []
-for i in range(iters):
-    torch.cuda.synchronize()
-    start = time.time()
-    outputs = pipe(prompts,
-            num_tokens=1,
-            do_sample=(args.sampling))
-    torch.cuda.synchronize()
-    end = time.time()
-    prefills.append(end - start)
-
-prefill_avg = np.mean(prefills[10:])
-
 # Total generation time
 times = []
 for i in range(iters):
@@ -142,7 +129,20 @@ for i in range(iters):
     end = time.time()
     times.append(end - start)
 
-time_avg = np.mean(times[10:])
+prefills = []
+for i in range(iters):
+    torch.cuda.synchronize()
+    start = time.time()
+    outputs = pipe(prompts,
+            num_tokens=1,
+            do_sample=(args.sampling))
+    torch.cuda.synchronize()
+    end = time.time()
+    prefills.append(end - start)
+
+prefill_avg = np.median(prefills[10:])
+
+time_avg = np.median(times[10:])
 if args.local_rank == 0:
     print(f"\ntotal generation time is {time_avg} sec")
 
@@ -161,7 +161,7 @@ if args.local_rank == 0:
     if args.performance:
         print_perf_stats(args.batch_size, map(lambda t: t / args.max_new_tokens, times), pipe.model.config)
 
-
+'''
 ######################################################################################
 # Provide opportunity for extra inference runs, without needing to reload the model, #
 #        but capable with different batch size, prompt length and generation length. #
@@ -192,7 +192,7 @@ for i in range(10):
         num_tokens=args.max_new_tokens,
         do_sample=(args.sampling))
     torch.cuda.synchronize()
-
+'''
 while False:
     if args.local_rank == 0:
         cont = input("\nContinue another inference benchmark run? (yes | no) ")
