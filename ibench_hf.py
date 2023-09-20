@@ -422,8 +422,8 @@ def main():
 
         # reports
         print("\n")
-        print("Prefill phase latency on prompt of length   : " + str(ps) + " = " + "{:.3f}".format(1000 * Ptime) + "ms")
-        print("Decode latency per token on output of length: " + str(gs) + " = " + "{:.3f}".format(1000 * Dtime) + "ms")
+        print("Prefill phase latency on prompt of length   : " + str(ps) + " = " + "{:.3f}".format(1000 * Ptime) + " " + "ms")
+        print("Decode latency per token on output of length: " + str(gs) + " = " + "{:.3f}".format(1000 * Dtime) + " " + "ms")
         break
 
 if __name__=="__main__":

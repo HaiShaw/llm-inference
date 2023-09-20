@@ -143,8 +143,8 @@ if args.local_rank == 0:
 # outputs_shape = .shape[1]
 decode_avg = (time_avg - prefill_avg) / (args.max_new_tokens - 1)
 if args.local_rank == 0:
-    print("Prefill phase latency on prompt of length   : " + str(args.prompting_length) + " = " + "{:.3f}".format(1000 * prefill_avg) + "ms")
-    print("Decode latency per token on output of length: " + str(args.max_new_tokens) + " = " + "{:.3f}".format(1000 * decode_avg) + "ms")
+    print("Prefill phase latency on prompt of length   : " + str(args.prompting_length) + " = " + "{:.3f}".format(1000 * prefill_avg) + " " + "ms")
+    print("Decode latency per token on output of length: " + str(args.max_new_tokens) + " = " + "{:.3f}".format(1000 * decode_avg) + " " + "ms")
     print("Batch size: " + str(args.batch_size))
 
 
