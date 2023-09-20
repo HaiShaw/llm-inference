@@ -241,9 +241,7 @@ def main():
         if ps % 2:
             ps += 1
 
-        ps_s = str(ps)
-
-        print("Batch size = " + bs_s + ", prompt length = " + ps_s + ", generation length = " + gs_s)
+        print("Batch size = " + str(bs) + ", prompt length = " + str(ps) + ", generation length = " + str(gs) )
 
         # 0 - warmup, 1 - profiling if set
         for i in range(2+args.n):
@@ -424,14 +422,9 @@ def main():
 
         # reports
         print("\n")
-        print("Prefill phase latency on prompt of length   : " + ps_s + " = " + "{:.3f}".format(1000 * Ptime) + "ms")
-        print("Decode latency per token on output of length: " + gs_s + " = " + "{:.3f}".format(1000 * Dtime) + "ms")
-
-
-        cont = input("\nContinue another inference benchmark run? (yes | no) ")
-        if cont.lower() == "no":
-            break
-
+        print("Prefill phase latency on prompt of length   : " + str(ps) + " = " + "{:.3f}".format(1000 * Ptime) + "ms")
+        print("Decode latency per token on output of length: " + str(gs) + " = " + "{:.3f}".format(1000 * Dtime) + "ms")
+        break
 
 if __name__=="__main__":
     main()
