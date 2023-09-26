@@ -109,7 +109,7 @@ for b in range(args.batch_size):
     prompts.append(sequence)
 
 if args.cudaGraph:
-    pipe.init_cudaGraph(prompts)
+    pipe.init_cudaGraph(prompts, max_new_tokens=args.max_new_tokens, do_sample=args.sampling)
 
 if args.sampling:
     print("Inferencing with sampling...")
@@ -118,17 +118,6 @@ iters = 200 if args.performance else 2 #warmup
 
 # Prefill time
 # Total generation time
-times = []
-for i in range(iters):
-    torch.cuda.synchronize()
-    start = time.time()
-    outputs = pipe(prompts,
-            num_tokens=args.max_new_tokens,
-            do_sample=(args.sampling))
-    torch.cuda.synchronize()
-    end = time.time()
-    times.append(end - start)
-
 prefills = []
 for i in range(iters):
     torch.cuda.synchronize()
@@ -140,9 +129,21 @@ for i in range(iters):
     end = time.time()
     prefills.append(end - start)
 
-prefill_avg = np.median(prefills[10:])
+prefill_avg = np.mean(prefills[10:])
 
-time_avg = np.median(times[10:])
+times = []
+for i in range(iters):
+    torch.cuda.synchronize()
+    start = time.time()
+    outputs = pipe(prompts,
+            num_tokens=args.max_new_tokens,
+            do_sample=(args.sampling))
+    torch.cuda.synchronize()
+    end = time.time()
+    times.append(end - start)
+
+time_avg = np.mean(times[10:])
+
 if args.local_rank == 0:
     print(f"\ntotal generation time is {time_avg} sec")
 
