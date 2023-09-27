@@ -106,13 +106,14 @@ class DSPipeline():
 
         generate_kwargs = dict(max_new_tokens=max_new_tokens, do_sample=do_sample)
         self.g = torch.cuda.CUDAGraph()
-        self.static_input = input_tokens.input_ids
 
         if isinstance(self.tokenizer, LlamaTokenizerFast):
+            self.static_input = input_tokens.input_ids
             self.static_output = self.model.generate(self.static_input, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
             with torch.cuda.graph(self.g):
                 self.static_output = self.model.generate(self.static_input, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
         else:
+            self.static_input = input_tokens
             outputs = self.model.generate(**self.static_input, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
             with torch.cuda.graph(self.g):
                 self.static_output = self.model.generate(**self.static_input, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
@@ -132,9 +133,12 @@ class DSPipeline():
         generate_kwargs = dict(max_new_tokens=num_tokens, do_sample=do_sample)
 
         input_tokens = self.generate_tokens(inputs)
-        self.static_input.copy_(input_tokens.input_ids)
 
         if  self.cudaGraph:
+            if isinstance(self.tokenizer, LlamaTokenizerFast):
+                self.static_input.copy_(input_tokens.input_ids)
+            else:
+                self.static_input = input_tokens
             self.g.replay()
             outputs = self.static_output
         else:
@@ -147,5 +151,4 @@ class DSPipeline():
             else:
                 outputs = self.model.generate(**input_tokens, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
         outputs = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
-        
         return outputs
