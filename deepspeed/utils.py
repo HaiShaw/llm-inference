@@ -104,14 +104,18 @@ class DSPipeline():
         input_tokens = self.generate_tokens(prompts)
         self.model.cuda().to(self.device)
 
+        # print("==============max new tokens", max_new_tokens)
         generate_kwargs = dict(max_new_tokens=max_new_tokens, do_sample=do_sample)
         self.g = torch.cuda.CUDAGraph()
 
         if isinstance(self.tokenizer, LlamaTokenizerFast):
             self.static_input = input_tokens.input_ids
-            self.static_output = self.model.generate(self.static_input, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
+            for _ in range (2):
+                self.static_output = self.model.generate(self.static_input, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
+                # print("=================selflstatic_output", len(self.static_output[0]))
             with torch.cuda.graph(self.g):
                 self.static_output = self.model.generate(self.static_input, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
+            # print("=================selflstatic_output after graph capture", len(self.static_output[0]))
         else:
             self.static_input = input_tokens
             outputs = self.model.generate(**self.static_input, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
@@ -139,7 +143,8 @@ class DSPipeline():
                 self.static_input.copy_(input_tokens.input_ids)
             else:
                 self.static_input = input_tokens
-            self.g.replay()
+            for _ in range(num_tokens):
+                self.g.replay()      # since both prefill and decoding use this replay, the prefill and decoding have almost the same execution time/token
             outputs = self.static_output
         else:
             self.model.cuda().to(self.device)
@@ -150,5 +155,6 @@ class DSPipeline():
                 outputs = self.model.generate(input_tokens.input_ids, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
             else:
                 outputs = self.model.generate(**input_tokens, **generate_kwargs, pad_token_id=self.tokenizer.eos_token_id)
+        # print("=========", len(outputs[0]))
         outputs = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
         return outputs

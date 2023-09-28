@@ -86,6 +86,8 @@ if args.use_meta_tensor:
 else:
     ds_kwargs = dict()
 
+print(pipe.model)
+
 if args.ds_inference:
     pipe.model = deepspeed.init_inference(pipe.model,
                                     dtype=data_type,
@@ -114,12 +116,13 @@ if args.cudaGraph:
 if args.sampling:
     print("Inferencing with sampling...")
 
-iters = 200 if args.performance else 2 #warmup
+iters = 20 if args.performance else 2 #warmup
 
 # Prefill time
 # Total generation time
 prefills = []
 for i in range(iters):
+    print("==========iter", i)
     torch.cuda.synchronize()
     start = time.time()
     outputs = pipe(prompts,
@@ -129,10 +132,11 @@ for i in range(iters):
     end = time.time()
     prefills.append(end - start)
 
-prefill_avg = np.mean(prefills[10:])
+prefill_avg = np.mean(prefills[1:])
 
 times = []
 for i in range(iters):
+    print("==========iter", i)
     torch.cuda.synchronize()
     start = time.time()
     outputs = pipe(prompts,
@@ -142,7 +146,7 @@ for i in range(iters):
     end = time.time()
     times.append(end - start)
 
-time_avg = np.mean(times[10:])
+time_avg = np.mean(times[1:])
 
 if args.local_rank == 0:
     print(f"\ntotal generation time is {time_avg} sec")
