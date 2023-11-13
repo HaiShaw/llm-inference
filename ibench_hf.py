@@ -274,9 +274,8 @@ def main():
 
                     prof_pref.start_profile()
                     generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1, use_cache=False)
-                    prof_pref.stop_profile()
-                    
                     torch.cuda.synchronize()
+                    prof_pref.stop_profile()
                     prefill_latency = perf_counter() - start_time
 
                     flops  = prof_pref.get_total_flops()
@@ -288,8 +287,7 @@ def main():
                     prof_pref.end_profile()
                 else:
                     start_time = perf_counter()
-                    generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1, use_cache=False)
-                    
+                    generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1, use_cache=False) 
                     torch.cuda.synchronize()
                     prefill_latency = perf_counter() - start_time
             else:
@@ -298,10 +296,9 @@ def main():
                         start_time = perf_counter()
 
                         prof_pref.start_profile()
-                        generate_ids = model.generate(input_ids, max_new_tokens=1)
-                        prof_pref.stop_profile()
-                        
+                        generate_ids = model.generate(input_ids, max_new_tokens=1) 
                         torch.cuda.synchronize()
+                        prof_pref.stop_profile()
                         prefill_latency = perf_counter() - start_time
 
                         flops  = prof_pref.get_total_flops()
@@ -314,16 +311,13 @@ def main():
                     else:
                         start_time = perf_counter()
                         generate_ids = model.generate(input_ids, max_new_tokens=1)
-                        
                         torch.cuda.synchronize()
                         prefill_latency = perf_counter() - start_time
                 else:
                     if args.profiling and i == 1:
                         start_time = perf_counter()
-
                         prof_pref.start_profile()
                         generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1)
-                        
                         torch.cuda.synchronize()
                         prof_pref.stop_profile()
 
@@ -339,7 +333,6 @@ def main():
                     else:
                         start_time = perf_counter()
                         generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1)
-                        
                         torch.cuda.synchronize()
                         prefill_latency = perf_counter() - start_time
 
@@ -354,7 +347,6 @@ def main():
                     prof_pref_dec.start_profile()
                     generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1), use_cache=False)
                     prof_pref_dec.stop_profile()
-                    
                     torch.cuda.synchronize()
                     decode_latency = perf_counter() - start_time
 
@@ -368,7 +360,6 @@ def main():
                 else:
                     start_time = perf_counter()
                     generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1), use_cache=False)
-                    
                     torch.cuda.synchronize()
                     decode_latency = perf_counter() - start_time
             else:
@@ -379,7 +370,6 @@ def main():
                         prof_pref_dec.start_profile()
                         generate_ids = model.generate(input_ids, max_new_tokens=(gs+1))
                         prof_pref_dec.stop_profile()
-                        
                         torch.cuda.synchronize()
                         decode_latency = perf_counter() - start_time
 
@@ -393,7 +383,6 @@ def main():
                     else:
                         start_time = perf_counter()
                         generate_ids = model.generate(input_ids, max_new_tokens=(gs+1))
-                        
                         torch.cuda.synchronize()
                         decode_latency = perf_counter() - start_time
                 else:
@@ -403,7 +392,6 @@ def main():
                         prof_pref_dec.start_profile()
                         generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1))
                         prof_pref_dec.stop_profile()
-                        
                         torch.cuda.synchronize()
                         decode_latency = perf_counter() - start_time
 
@@ -417,7 +405,6 @@ def main():
                     else:
                         start_time = perf_counter()
                         generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1))
-
                         torch.cuda.synchronize()
                         decode_latency = perf_counter() - start_time
 
