@@ -46,7 +46,7 @@ DM_2xH100_llamaII70b={'model.embed_tokens': 0, 'model.layers.0': 0, 'model.layer
 PATH1='/data/opt66b'
 PATH2='/data/llama65b'
 PATH3='/data/falcon40b-instruct'
-PATH4='/data/llama-2-70b-chat-hf'
+PATH4='/data/llama2-70b-chat'
 PATH5='/data/llama2-70b'
 
 def main():
