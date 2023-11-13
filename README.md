@@ -117,6 +117,30 @@ On AMD GPUs, to speedup DS JIT compilation, you may specify GCN architecture cod
 - MI100:  PYTORCH_ROCM_ARCH='gfx908' deepspeed --num_gpus 8 deepspeed/ibench_ds.py --name /data/llama2-7b --batch_size  8 --prompting_length 512 --performance --ds_inference --max_new_tokens 32 --use_kernel
 ```
 
+
+### Inference with vLLM
+- `vllm/ibench_vllm.py` reports **prefill** latency and **decode** (per token generation) latency to arbitary batch size, prompt (input) size, generation (output) size provided, with or without Tensor Parallelism.
+- note: need to modify some model config to support 4K and 8K sequence length (sum of prompt_len plus output_len), e.g.
+- to support 4K sequence length for Llama2-13b, modify model's config.json to "max_position_embeddings": 4096
+- to support 8K sequence length for Llama2-70b, modify model's config.json to "max_position_embeddings": 8192
+- make sure the sum(prompt_len, output_len) < max_position_embeddings
+
+```python
+# prerequisites:
+# To enable faster access and loading for models, download and store converted model weights and tokenizer local, provide the path to --name
+# install vLLM to your container (with AMD / Nvidia GPU) first
+```
+
+Examples:
+
+```python
+# on 1 MI300X
+python ibench_vllm.py --model /data/llama2/llama2-70B-chat-hf --tensor-parallel-size 1 --input-len 8128 --batch-size 4 --output-len 32
+
+# on 8 H100
+python ibench_vllm.py --model /data/llama2/llama2-70B-chat-hf --tensor-parallel-size 8 --input-len 4096 --batch-size 2
+```
+
 ### Status
 
 We support multiple GPUs, multiple nodes, and multiple dimensional parallelism, some by implicit software setup, some by explicit argumentation.
