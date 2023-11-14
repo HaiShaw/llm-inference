@@ -276,6 +276,7 @@ def main():
                     generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1, use_cache=False)
                     torch.cuda.synchronize()
                     prof_pref.stop_profile()
+                    
                     prefill_latency = perf_counter() - start_time
 
                     flops  = prof_pref.get_total_flops()
@@ -289,6 +290,7 @@ def main():
                     start_time = perf_counter()
                     generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1, use_cache=False) 
                     torch.cuda.synchronize()
+                    
                     prefill_latency = perf_counter() - start_time
             else:
                 if args.d: # deterministic prompt
@@ -299,6 +301,7 @@ def main():
                         generate_ids = model.generate(input_ids, max_new_tokens=1) 
                         torch.cuda.synchronize()
                         prof_pref.stop_profile()
+                        
                         prefill_latency = perf_counter() - start_time
 
                         flops  = prof_pref.get_total_flops()
@@ -312,6 +315,7 @@ def main():
                         start_time = perf_counter()
                         generate_ids = model.generate(input_ids, max_new_tokens=1)
                         torch.cuda.synchronize()
+                        
                         prefill_latency = perf_counter() - start_time
                 else:
                     if args.profiling and i == 1:
@@ -334,6 +338,7 @@ def main():
                         start_time = perf_counter()
                         generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=1)
                         torch.cuda.synchronize()
+                        
                         prefill_latency = perf_counter() - start_time
 
             # ignore the 1st (warmup) and 2nd (warmup/profiling) round
@@ -346,8 +351,9 @@ def main():
 
                     prof_pref_dec.start_profile()
                     generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1), use_cache=False)
-                    prof_pref_dec.stop_profile()
                     torch.cuda.synchronize()
+                    prof_pref_dec.stop_profile()
+                    
                     decode_latency = perf_counter() - start_time
 
                     flops  = prof_pref_dec.get_total_flops()
@@ -361,6 +367,7 @@ def main():
                     start_time = perf_counter()
                     generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1), use_cache=False)
                     torch.cuda.synchronize()
+                    
                     decode_latency = perf_counter() - start_time
             else:
                 if args.d: # deterministic prompt
@@ -369,8 +376,9 @@ def main():
 
                         prof_pref_dec.start_profile()
                         generate_ids = model.generate(input_ids, max_new_tokens=(gs+1))
-                        prof_pref_dec.stop_profile()
                         torch.cuda.synchronize()
+                        prof_pref_dec.stop_profile()
+                        
                         decode_latency = perf_counter() - start_time
 
                         flops  = prof_pref_dec.get_total_flops()
@@ -384,6 +392,7 @@ def main():
                         start_time = perf_counter()
                         generate_ids = model.generate(input_ids, max_new_tokens=(gs+1))
                         torch.cuda.synchronize()
+                        
                         decode_latency = perf_counter() - start_time
                 else:
                     if args.profiling and i == 1:
@@ -391,8 +400,9 @@ def main():
 
                         prof_pref_dec.start_profile()
                         generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1))
-                        prof_pref_dec.stop_profile()
                         torch.cuda.synchronize()
+                        prof_pref_dec.stop_profile()
+                        
                         decode_latency = perf_counter() - start_time
 
                         flops  = prof_pref_dec.get_total_flops()
@@ -406,6 +416,7 @@ def main():
                         start_time = perf_counter()
                         generate_ids = model.generate(input_ids, do_sample=True, max_new_tokens=(gs+1))
                         torch.cuda.synchronize()
+                        
                         decode_latency = perf_counter() - start_time
 
             # ignore the 1st (warmup) and 2nd (warmup/profiling) round
