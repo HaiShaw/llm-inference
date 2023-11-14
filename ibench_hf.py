@@ -191,7 +191,7 @@ def main():
             elif args.platform == "2xMI250":
                 model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_llamaII70b)
             elif args.platform == "4xMI250":
-                model = LlamaForCausalLM.from_pretrained(PATH, torch_dtype=torch.bfloat16, device_map=DM_4xMI250_llamaII70b)
+                model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_4xMI250_llamaII70b)
             else:
                 sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
         else:
