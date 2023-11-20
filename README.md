@@ -37,7 +37,7 @@ LLM Inference Benchmark Example
 optional arguments:
   -h, --help            show this help message and exit
   --model MODEL         name of LLM (opt66b | llama65b | falcon40b-instruct | llama2-70b-chat | llama2-70b) for inference (default: opt66b)
-  --platform PLATFORM   name of DL platform (MI300X | 2xH100 | 2xMI250 | 4xMI250) for inference (default: MI300X)
+  --platform PLATFORM   name of DL platform (MI300X | 4xMI300X | 8xMI300X | 2xH100 | 2xMI250 | 4xMI250) for inference (default: MI300X)
   --precision PRECISION
                         model precision and data type (float16 | bfloat16) for inference (default: float16)
   --n N                 number of iterations to inference; report an average of this number of runs (default: 10)
