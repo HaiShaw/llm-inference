@@ -21,6 +21,8 @@ DM_MI300X_opt66b={'': 0}
 DM_MI300X_llama65b={'': 0}
 DM_MI300X_falcon40b={'': 0}
 DM_MI300X_llamaII70b={'': 0}
+DM_4xMI300X_llamaII70b={'model.embed_tokens': 0, 'model.layers.0': 0, 'model.layers.1': 0, 'model.layers.2': 0, 'model.layers.3': 0, 'model.layers.4': 0, 'model.layers.5': 0, 'model.layers.6': 0, 'model.layers.7': 0, 'model.layers.8': 0, 'model.layers.9': 0, 'model.layers.10': 0, 'model.layers.11': 0, 'model.layers.12': 0, 'model.layers.13': 0, 'model.layers.14': 0, 'model.layers.15': 0, 'model.layers.16': 0, 'model.layers.17': 0, 'model.layers.18': 0, 'model.layers.19': 0, 'model.layers.20': 1, 'model.layers.21': 1, 'model.layers.22': 1, 'model.layers.23': 1, 'model.layers.24': 1, 'model.layers.25': 1, 'model.layers.26': 1, 'model.layers.27': 1, 'model.layers.28': 1, 'model.layers.29': 1, 'model.layers.30': 1, 'model.layers.31': 1, 'model.layers.32': 1, 'model.layers.33': 1, 'model.layers.34': 1, 'model.layers.35': 1, 'model.layers.36': 1, 'model.layers.37': 1, 'model.layers.38': 1, 'model.layers.39': 1, 'model.layers.40': 1, 'model.layers.41': 2, 'model.layers.42': 2, 'model.layers.43': 2, 'model.layers.44': 2, 'model.layers.45': 2, 'model.layers.46': 2, 'model.layers.47': 2, 'model.layers.48': 2, 'model.layers.49': 2, 'model.layers.50': 2, 'model.layers.51': 2, 'model.layers.52': 2, 'model.layers.53': 2, 'model.layers.54': 2, 'model.layers.55': 2, 'model.layers.56': 2, 'model.layers.57': 2, 'model.layers.58': 2, 'model.layers.59': 2, 'model.layers.60': 2, 'model.layers.61': 2, 'model.layers.62': 3, 'model.layers.63': 3, 'model.layers.64': 3, 'model.layers.65': 3, 'model.layers.66': 3, 'model.layers.67': 3, 'model.layers.68': 3, 'model.layers.69': 3, 'model.layers.70': 3, 'model.layers.71': 3, 'model.layers.72': 3, 'model.layers.73': 3, 'model.layers.74': 3, 'model.layers.75': 3, 'model.layers.76': 3, 'model.layers.77': 3, 'model.layers.78': 3, 'model.layers.79': 3, 'model.norm': 3, 'lm_head': 3}
+DM_8xMI300x_llamaII70b={'model.embed_tokens': 0, 'model.layers.0': 0, 'model.layers.1': 0, 'model.layers.2': 0, 'model.layers.3': 0, 'model.layers.4': 0, 'model.layers.5': 0, 'model.layers.6': 0, 'model.layers.7': 0, 'model.layers.8': 0, 'model.layers.9': 0, 'model.layers.10': 1, 'model.layers.11': 1, 'model.layers.12': 1, 'model.layers.13': 1, 'model.layers.14': 1, 'model.layers.15': 1, 'model.layers.16': 1, 'model.layers.17': 1, 'model.layers.18': 1, 'model.layers.19': 1, 'model.layers.20': 1, 'model.layers.21': 2, 'model.layers.22': 2, 'model.layers.23': 2, 'model.layers.24': 2, 'model.layers.25': 2, 'model.layers.26': 2, 'model.layers.27': 2, 'model.layers.28': 2, 'model.layers.29': 2, 'model.layers.30': 2, 'model.layers.31': 2, 'model.layers.32': 3, 'model.layers.33': 3, 'model.layers.34': 3, 'model.layers.35': 3, 'model.layers.36': 3, 'model.layers.37': 3, 'model.layers.38': 3, 'model.layers.39': 3, 'model.layers.40': 3, 'model.layers.41': 3, 'model.layers.42': 3, 'model.layers.43': 4, 'model.layers.44': 4, 'model.layers.45': 4, 'model.layers.46': 4, 'model.layers.47': 4, 'model.layers.48': 4, 'model.layers.49': 4, 'model.layers.50': 4, 'model.layers.51': 4, 'model.layers.52': 4, 'model.layers.53': 4, 'model.layers.54': 5, 'model.layers.55': 5, 'model.layers.56': 5, 'model.layers.57': 5, 'model.layers.58': 5, 'model.layers.59': 5, 'model.layers.60': 5, 'model.layers.61': 5, 'model.layers.62': 5, 'model.layers.63': 5, 'model.layers.64': 5, 'model.layers.65': 6, 'model.layers.66': 6, 'model.layers.67': 6, 'model.layers.68': 6, 'model.layers.69': 6, 'model.layers.70': 6, 'model.layers.71': 6, 'model.layers.72': 6, 'model.layers.73': 6, 'model.layers.74': 6, 'model.layers.75': 6, 'model.layers.76': 7, 'model.layers.77': 7, 'model.layers.78': 7, 'model.layers.79': 7, 'model.norm': 7, 'lm_head': 7}
 
 # device map (model layers to device mapping) for 2xMI250
 DM_2xMI250_opt66b={'model.decoder.embed_tokens': 0, 'lm_head': 0, 'model.decoder.embed_positions': 0, 'model.decoder.final_layer_norm': 0, 'model.decoder.layers.0': 0, 'model.decoder.layers.1': 0, 'model.decoder.layers.2': 0, 'model.decoder.layers.3': 0, 'model.decoder.layers.4': 0, 'model.decoder.layers.5': 0, 'model.decoder.layers.6': 0, 'model.decoder.layers.7': 0, 'model.decoder.layers.8': 0, 'model.decoder.layers.9': 0, 'model.decoder.layers.10': 0, 'model.decoder.layers.11': 0, 'model.decoder.layers.12': 0, 'model.decoder.layers.13': 0, 'model.decoder.layers.14': 0, 'model.decoder.layers.15': 0, 'model.decoder.layers.16': 1, 'model.decoder.layers.17': 1, 'model.decoder.layers.18': 1, 'model.decoder.layers.19': 1, 'model.decoder.layers.20': 1, 'model.decoder.layers.21': 1, 'model.decoder.layers.22': 1, 'model.decoder.layers.23': 1, 'model.decoder.layers.24': 1, 'model.decoder.layers.25': 1, 'model.decoder.layers.26': 1, 'model.decoder.layers.27': 1, 'model.decoder.layers.28': 1, 'model.decoder.layers.29': 1, 'model.decoder.layers.30': 1, 'model.decoder.layers.31': 1, 'model.decoder.layers.32': 1, 'model.decoder.layers.33': 2, 'model.decoder.layers.34': 2, 'model.decoder.layers.35': 2, 'model.decoder.layers.36': 2, 'model.decoder.layers.37': 2, 'model.decoder.layers.38': 2, 'model.decoder.layers.39': 2, 'model.decoder.layers.40': 2, 'model.decoder.layers.41': 2, 'model.decoder.layers.42': 2, 'model.decoder.layers.43': 2, 'model.decoder.layers.44': 2, 'model.decoder.layers.45': 2, 'model.decoder.layers.46': 2, 'model.decoder.layers.47': 2, 'model.decoder.layers.48': 2, 'model.decoder.layers.49': 2, 'model.decoder.layers.50': 3, 'model.decoder.layers.51': 3, 'model.decoder.layers.52': 3, 'model.decoder.layers.53': 3, 'model.decoder.layers.54': 3, 'model.decoder.layers.55': 3, 'model.decoder.layers.56': 3, 'model.decoder.layers.57': 3, 'model.decoder.layers.58': 3, 'model.decoder.layers.59': 3, 'model.decoder.layers.60': 3, 'model.decoder.layers.61': 3, 'model.decoder.layers.62': 3, 'model.decoder.layers.63': 3}
@@ -62,7 +64,7 @@ def main():
         "--platform",
         type=str,
         default="MI300X",
-        help="name of DL platform (MI300X | 2xH100 | 2xMI250) for inference (default: MI300X)"
+        help="name of DL platform (MI300X | 4xMI300X | 8xMI300X |xH100 | 2xMI250) for inference (default: MI300X)"
     )
     parser.add_argument(
         "--precision",
@@ -137,7 +139,7 @@ def main():
             elif args.platform == "2xMI250":
                  model = AutoModelForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_opt66b)
             else:
-                sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
+                sys.exit("Enter valid --platform (MI300X | 4xMI300X | 8xMI300X |xH100 | 2xMI250)")
         else:
             sys.exit("Enter valid --precision (float16 | bfloat16)")
 
@@ -155,7 +157,7 @@ def main():
             elif args.platform == "2xMI250":
                 model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_llama65b)
             else:
-                sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
+                sys.exit("Enter valid --platform (MI300X | 4xMI300X | 8xMI300X |xH100 | 2xMI250)")
         else:
             sys.exit("Enter valid --precision (float16 | bfloat16)")
 
@@ -173,7 +175,7 @@ def main():
             elif args.platform == "2xMI250":
                 model = AutoModelForCausalLM.from_pretrained(args.model_path, trust_remote_code=True, torch_dtype=torch.float16, device_map=DM_2xMI250_falcon40b)
             else:
-                sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
+                sys.exit("Enter valid --platform (MI300X | 4xMI300X | 8xMI300X |xH100 | 2xMI250)")
         else:
             sys.exit("Enter valid --precision (float16 | bfloat16)")
 
@@ -186,6 +188,10 @@ def main():
         elif args.precision == "bfloat16":
             if args.platform == "MI300X":
                 model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_MI300X_llamaII70b)
+            elif args.platform == "4xMI300X":
+                model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_4xMI300X_llamaII70b)
+            elif args.platform == "8xMI300X":
+                model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_8xMI300X_llamaII70b)
             elif args.platform == "2xH100":
                 model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_2xH100_llamaII70b)
             elif args.platform == "2xMI250":
@@ -193,7 +199,7 @@ def main():
             elif args.platform == "4xMI250":
                 model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_4xMI250_llamaII70b)
             else:
-                sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
+                sys.exit("Enter valid --platform (MI300X | 4xMI300X | 8xMI300X |xH100 | 2xMI250)")
         else:
             sys.exit("Enter valid --precision (float16 | bfloat16)")
 
@@ -206,12 +212,16 @@ def main():
         elif args.precision == "bfloat16":
             if args.platform == "MI300X":
                 model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_MI300X_llamaII70b)
+            elif args.platform == "4xMI300X":
+                model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_4xMI300X_llamaII70b)
+            elif args.platform == "8xMI300X":
+                model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_8xMI300X_llamaII70b)
             elif args.platform == "2xH100":
                 model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_2xH100_llamaII70b)
             elif args.platform == "2xMI250":
                 model = LlamaForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.bfloat16, device_map=DM_2xMI250_llamaII70b)
             else:
-                sys.exit("Enter valid --platform (MI300X | 2xH100 | 2xMI250)")
+                sys.exit("Enter valid --platform (MI300X | 4xMI300X | 8xMI300X |xH100 | 2xMI250)")
         else:
             sys.exit("Enter valid --precision (float16 | bfloat16)")
 
